@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Amigo Secreto - Sorteo y Enlaces Compartibles</title>
+    <title>Amigo Secreto en Vivo - Salas y Regalos</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Icons -->
@@ -51,6 +51,15 @@
             animation: popIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
 
+        @keyframes pulseDot {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(1.35); }
+        }
+
+        .live-dot {
+            animation: pulseDot 1.8s ease-in-out infinite;
+        }
+
         #toast-container {
             position: fixed;
             bottom: 1.25rem;
@@ -77,48 +86,54 @@
             <i class="fa-solid fa-sleigh text-8xl absolute -bottom-4 right-8 -rotate-6"></i>
         </div>
 
-        <div class="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-8 relative z-10 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 py-5 sm:py-7 relative z-10 flex flex-col sm:flex-row items-center justify-between gap-4">
             <div class="flex items-center gap-4 text-center sm:text-left">
-                <div class="w-14 h-14 sm:w-16 sm:h-16 bg-white/15 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/25 shadow-inner animate-float shrink-0 mx-auto sm:mx-0">
+                <button type="button" onclick="goToLobby()" class="w-14 h-14 sm:w-16 sm:h-16 bg-white/15 hover:bg-white/25 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/25 shadow-inner animate-float shrink-0 mx-auto sm:mx-0 transition" title="Ir al inicio / Crear nueva sala">
                     <i class="fa-solid fa-gifts text-3xl text-amber-300"></i>
-                </div>
+                </button>
                 <div>
-                    <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/15 text-amber-200 text-xs font-semibold tracking-wide uppercase mb-1">
-                        <i class="fa-solid fa-link text-[10px]"></i> Sin Servidor &bull; Enlaces Mágicos
+                    <div class="flex flex-wrap items-center justify-center sm:justify-start gap-2 mb-1">
+                        <span id="connection-badge" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/15 text-amber-200 text-xs font-semibold tracking-wide">
+                            <span class="w-2 h-2 rounded-full bg-amber-300"></span>
+                            <span>Verificando conexión...</span>
+                        </span>
+                        <span id="header-room-pill" class="hidden inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-black/25 text-white text-xs font-mono">
+                            Sala: <strong id="header-room-id">---</strong>
+                        </span>
                     </div>
                     <h1 class="font-display text-2xl sm:text-4xl font-bold tracking-tight">
-                        Amigo Secreto
+                        Amigo Secreto <span class="text-amber-300">en Vivo</span>
                     </h1>
                     <p class="text-rose-100 text-xs sm:text-sm mt-0.5">
-                        Anoten sus deseos de regalo, compartan el enlace por WhatsApp y sorteen en segundos.
+                        Todos entran al mismo enlace a la vez, anotan su regalo y descubren su amigo secreto.
                     </p>
                 </div>
             </div>
 
-            <div class="flex items-center gap-2 shrink-0">
-                <button type="button" onclick="openHelpModal()" class="px-3.5 py-2 rounded-xl bg-white/15 hover:bg-white/25 active:scale-95 transition text-white text-xs sm:text-sm font-semibold flex items-center gap-2 border border-white/20 backdrop-blur-sm">
-                    <i class="fa-solid fa-cloud-arrow-up"></i>
-                    <span>¿Cómo publicar?</span>
+            <div class="flex flex-wrap items-center justify-center gap-2 shrink-0">
+                <button type="button" onclick="openFirebaseSetupModal()" class="px-3.5 py-2 rounded-xl bg-white/15 hover:bg-white/25 active:scale-95 transition text-white text-xs sm:text-sm font-semibold flex items-center gap-2 border border-white/20 backdrop-blur-sm">
+                    <i class="fa-solid fa-fire text-amber-300"></i>
+                    <span>Configurar Firebase</span>
                 </button>
-                <button type="button" onclick="openConfirmResetModal()" class="px-3.5 py-2 rounded-xl bg-rose-950/40 hover:bg-rose-950/60 active:scale-95 transition text-white text-xs sm:text-sm font-semibold flex items-center gap-2 border border-white/15">
-                    <i class="fa-solid fa-rotate-right"></i>
-                    <span>Nuevo</span>
+                <button type="button" onclick="goToLobby()" class="px-3.5 py-2 rounded-xl bg-rose-950/45 hover:bg-rose-950/65 active:scale-95 transition text-white text-xs sm:text-sm font-semibold flex items-center gap-2 border border-white/15">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>Nueva Sala</span>
                 </button>
             </div>
         </div>
     </header>
 
-    <!-- Local File Warning Banner (Shown only if opened via file://) -->
-    <div id="local-file-banner" class="hidden bg-amber-50 border-b border-amber-200 text-amber-900 px-4 py-3 text-xs sm:text-sm">
-        <div class="max-w-5xl mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+    <!-- Unconfigured Firebase Warning Banner -->
+    <div id="firebase-warning-banner" class="hidden bg-amber-50 border-b border-amber-200 text-amber-950 px-4 py-3 text-xs sm:text-sm">
+        <div class="max-w-5xl mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5">
             <div class="flex items-start gap-2.5">
-                <i class="fa-solid fa-triangle-exclamation text-amber-600 mt-0.5 shrink-0"></i>
-                <p>
-                    Estás abriendo este archivo desde tu computadora (<code class="bg-amber-100 px-1.5 py-0.5 rounded font-mono text-xs">file://</code>). Para que los enlaces compartidos funcionen en los teléfonos de tus amigos, súbelo gratis a <strong>Netlify Drop</strong> o <strong>GitHub Pages</strong>.
-                </p>
+                <i class="fa-solid fa-triangle-exclamation text-amber-600 mt-0.5 shrink-0 text-base"></i>
+                <div>
+                    <strong>Modo Local (Firebase aún no conectado):</strong> Pega tus credenciales gratuitas de Firebase para que todos los participantes puedan anotarse al mismo tiempo desde sus teléfonos.
+                </div>
             </div>
-            <button type="button" onclick="openHelpModal()" class="text-amber-800 underline font-bold shrink-0 hover:text-amber-950">
-                Ver pasos (1 min) &rarr;
+            <button type="button" onclick="openFirebaseSetupModal()" class="px-3.5 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shrink-0 shadow-sm transition">
+                Pegar Credenciales / Ver Pasos
             </button>
         </div>
     </div>
@@ -127,192 +142,224 @@
     <main class="flex-grow max-w-5xl w-full mx-auto px-4 sm:px-6 py-7">
 
         <!-- ================================================================= -->
-        <!-- VIEW 1: GROUP SETUP & SHARED REGISTRATION (#g=...)                -->
+        <!-- VIEW 0: LOBBY - CREATE NEW ROOM OR JOIN EXISTING ROOM             -->
         <!-- ================================================================= -->
-        <div id="setup-view" class="space-y-6">
+        <div id="lobby-view" class="space-y-6">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                
+                <!-- Create New Room (7 cols) -->
+                <section class="lg:col-span-7 bg-white rounded-3xl shadow-sm border border-slate-200/80 p-6 sm:p-8">
+                    <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-50 text-rose-700 text-xs font-bold uppercase tracking-wider mb-3">
+                        <i class="fa-solid fa-sparkles"></i> Organizador
+                    </div>
+                    <h2 class="font-display text-2xl sm:text-3xl font-bold text-slate-800">
+                        Crear una Nueva Sala de Juego
+                    </h2>
+                    <p class="text-slate-600 text-sm mt-1">
+                        Crea salas ilimitadas e independientes (una para la familia, otra para la oficina o amigos).
+                    </p>
 
-            <!-- Prominent Share Group Link Card -->
+                    <form onsubmit="handleCreateRoom(event)" class="mt-6 space-y-4">
+                        <div>
+                            <label for="new-room-title" class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+                                Nombre del Grupo / Evento <span class="text-rose-500">*</span>
+                            </label>
+                            <div class="relative">
+                                <i class="fa-solid fa-champagne-glasses absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                                <input type="text" id="new-room-title" required maxlength="45"
+                                    placeholder="Ej. Navidad Familia Pérez 2026"
+                                    class="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 focus:border-rose-500 focus:ring-2 focus:ring-rose-200 outline-none text-sm transition">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label for="new-room-budget" class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+                                    Presupuesto Sugerido
+                                </label>
+                                <div class="relative">
+                                    <i class="fa-solid fa-coins absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                                    <input type="text" id="new-room-budget" maxlength="35"
+                                        placeholder="Ej. $15.000 CLP"
+                                        class="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 focus:border-rose-500 focus:ring-2 focus:ring-rose-200 outline-none text-sm transition">
+                                </div>
+                            </div>
+
+                            <div>
+                                <label for="new-room-date" class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+                                    Fecha y Lugar
+                                </label>
+                                <div class="relative">
+                                    <i class="fa-regular fa-calendar-check absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                                    <input type="text" id="new-room-date" maxlength="45"
+                                        placeholder="Ej. 24 de Dic - 21:00 hrs"
+                                        class="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 focus:border-rose-500 focus:ring-2 focus:ring-rose-200 outline-none text-sm transition">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200/80">
+                            <label for="new-room-pin" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1 flex items-center justify-between">
+                                <span>Clave de Organizador (Opcional)</span>
+                                <span class="text-[11px] font-normal text-slate-400">4 dígitos</span>
+                            </label>
+                            <input type="text" id="new-room-pin" maxlength="6" inputmode="numeric"
+                                placeholder="Ej. 1234 (para que solo tú puedas iniciar el sorteo)"
+                                class="w-full px-3.5 py-2.5 rounded-xl bg-white border border-slate-200 focus:border-rose-500 focus:ring-2 focus:ring-rose-200 outline-none text-sm transition">
+                        </div>
+
+                        <button type="submit"
+                            class="w-full py-3.5 px-6 rounded-xl bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-700 hover:to-red-700 text-white font-display font-bold text-base sm:text-lg shadow-md shadow-rose-200/70 transition active:scale-[0.99] flex items-center justify-center gap-2.5">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i>
+                            <span>Crear Sala y Obtener Enlace Único</span>
+                        </button>
+                    </form>
+                </section>
+
+                <!-- Right Column: Join Existing Room + Recent Rooms (5 cols) -->
+                <div class="lg:col-span-5 space-y-6">
+                    <section class="bg-white rounded-3xl shadow-sm border border-slate-200/80 p-6">
+                        <h3 class="font-display text-lg font-bold text-slate-800 flex items-center gap-2 mb-2">
+                            <span class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center text-sm">
+                                <i class="fa-solid fa-door-open"></i>
+                            </span>
+                            Entrar a una Sala Existente
+                        </h3>
+                        <p class="text-xs text-slate-500 mb-4">
+                            Si ya tienes un código de sala, escríbelo aquí para entrar directamente:
+                        </p>
+                        <form onsubmit="handleJoinRoomByCode(event)" class="flex gap-2">
+                            <input type="text" id="join-room-code-input" required
+                                placeholder="Ej. navidad-4821"
+                                class="flex-1 px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none text-sm font-mono lowercase">
+                            <button type="submit"
+                                class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm transition shrink-0">
+                                Entrar
+                            </button>
+                        </form>
+                    </section>
+
+                    <!-- Recent Rooms in this Browser -->
+                    <section id="recent-rooms-box" class="hidden bg-white rounded-3xl shadow-sm border border-slate-200/80 p-6">
+                        <h3 class="font-display text-base font-bold text-slate-800 flex items-center gap-2 mb-3">
+                            <i class="fa-solid fa-clock-rotate-left text-amber-500"></i>
+                            <span>Tus Salas Recientes</span>
+                        </h3>
+                        <ul id="recent-rooms-list" class="space-y-2">
+                            <!-- Rendered dynamically -->
+                        </ul>
+                    </section>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ================================================================= -->
+        <!-- VIEW 1: ACTIVE ROOM - LIVE REGISTRATION & DRAW (#sala=CODIGO)     -->
+        <!-- ================================================================= -->
+        <div id="room-view" class="hidden space-y-6">
+
+            <!-- Room Header Banner + Share Single Link -->
             <section class="bg-gradient-to-br from-emerald-600 to-teal-700 rounded-2xl shadow-md text-white p-5 sm:p-6 relative overflow-hidden">
                 <i class="fa-brands fa-whatsapp text-8xl absolute -right-4 -bottom-4 opacity-10 pointer-events-none"></i>
                 <div class="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                    <div class="max-w-xl">
-                        <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/15 text-emerald-100 text-xs font-bold uppercase tracking-wider mb-1.5">
-                            <i class="fa-solid fa-share-nodes"></i> Paso 1: Invita al grupo
+                    <div>
+                        <div class="flex flex-wrap items-center gap-2 mb-1.5">
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/15 text-emerald-100 text-xs font-bold uppercase tracking-wider">
+                                <i class="fa-solid fa-tower-broadcast"></i> Sala en Vivo: <span id="room-code-display" class="font-mono">---</span>
+                            </span>
+                            <span id="room-status-pill" class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-400/20 text-amber-200 text-xs font-semibold">
+                                Inscripciones abiertas
+                            </span>
                         </div>
-                        <h2 class="font-display text-xl sm:text-2xl font-bold">
-                            Comparte este enlace para que cada uno se anote
+                        <h2 id="room-title-display" class="font-display text-2xl sm:text-3xl font-bold">
+                            Nombre del Grupo
                         </h2>
-                        <p class="text-emerald-50 text-xs sm:text-sm mt-1 leading-relaxed">
-                            Toda la lista y los regalos viajan codificados dentro de la dirección web. Cuando alguien agregue su nombre y deseo, recibirá un enlace actualizado para reenviar al grupo.
-                        </p>
+                        <div class="flex flex-wrap items-center gap-x-5 gap-y-1 mt-2 text-emerald-50 text-xs sm:text-sm">
+                            <span id="room-budget-display"><i class="fa-solid fa-coins text-amber-300 mr-1"></i> Presupuesto: Libre</span>
+                            <span id="room-date-display"><i class="fa-regular fa-calendar text-amber-300 mr-1"></i> Fecha por confirmar</span>
+                        </div>
                     </div>
 
                     <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 shrink-0">
-                        <button type="button" onclick="copyGroupLink()"
+                        <button type="button" onclick="copyRoomLink()"
                             class="px-4 py-3 rounded-xl bg-white text-emerald-800 hover:bg-emerald-50 active:scale-[0.99] font-bold text-sm shadow-sm transition flex items-center justify-center gap-2">
                             <i class="fa-regular fa-copy"></i>
-                            <span>Copiar Enlace del Grupo</span>
+                            <span>Copiar Enlace Único</span>
                         </button>
-                        <button type="button" onclick="shareGroupOnWhatsApp()"
+                        <button type="button" onclick="shareRoomOnWhatsApp()"
                             class="px-4 py-3 rounded-xl bg-emerald-950/40 hover:bg-emerald-950/60 border border-white/25 text-white active:scale-[0.99] font-bold text-sm transition flex items-center justify-center gap-2">
                             <i class="fa-brands fa-whatsapp text-lg text-emerald-300"></i>
-                            <span>Enviar por WhatsApp</span>
+                            <span>Invitar por WhatsApp</span>
                         </button>
                     </div>
                 </div>
             </section>
 
-            <!-- Event Configuration Card -->
-            <section class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-5 sm:p-6">
-                <div class="flex items-center justify-between mb-4">
-                    <h2 class="font-display text-lg sm:text-xl font-bold text-slate-800 flex items-center gap-2.5">
-                        <span class="w-8 h-8 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center text-sm">
-                            <i class="fa-solid fa-sliders"></i>
-                        </span>
-                        Detalles del Intercambio
-                    </h2>
-                    <span class="text-xs font-medium text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg flex items-center gap-1">
-                        <i class="fa-solid fa-link text-[10px]"></i> Sincronizado en URL
-                    </span>
-                </div>
-
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div>
-                        <label for="event-title" class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
-                            Nombre del Grupo
-                        </label>
-                        <div class="relative">
-                            <i class="fa-solid fa-champagne-glasses absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
-                            <input type="text" id="event-title" placeholder="Ej. Navidad Familia 2026" 
-                                class="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-rose-500 focus:ring-2 focus:ring-rose-200 outline-none text-sm transition"
-                                oninput="saveEventSettings()">
-                        </div>
-                    </div>
-
-                    <div>
-                        <label for="event-budget" class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
-                            Presupuesto Sugerido
-                        </label>
-                        <div class="relative">
-                            <i class="fa-solid fa-coins absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
-                            <input type="text" id="event-budget" placeholder="Ej. $15.000 CLP" 
-                                class="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-rose-500 focus:ring-2 focus:ring-rose-200 outline-none text-sm transition"
-                                oninput="saveEventSettings()">
-                        </div>
-                    </div>
-
-                    <div>
-                        <label for="event-date" class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
-                            Fecha / Lugar del Intercambio
-                        </label>
-                        <div class="relative">
-                            <i class="fa-regular fa-calendar-check absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
-                            <input type="text" id="event-date" placeholder="Ej. 24 de Dic - Cena 21:00" 
-                                class="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-rose-500 focus:ring-2 focus:ring-rose-200 outline-none text-sm transition"
-                                oninput="saveEventSettings()">
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Grid: Join / Add Participant + Participants List -->
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            <!-- SUB-VIEW A: REGISTRATION OPEN (Before Draw) -->
+            <div id="room-registration-section" class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                 
-                <!-- Left Column: Join / Add Form (5 cols) -->
+                <!-- Left Column: Join Form (5 cols) -->
                 <section class="lg:col-span-5 bg-white rounded-2xl shadow-sm border border-slate-200/80 p-5 sm:p-6 lg:sticky lg:top-6">
-                    <h2 id="form-heading" class="font-display text-lg sm:text-xl font-bold text-slate-800 flex items-center gap-2.5 mb-4">
+                    <h3 class="font-display text-lg sm:text-xl font-bold text-slate-800 flex items-center gap-2.5 mb-4">
                         <span class="w-8 h-8 rounded-lg bg-rose-100 text-rose-600 flex items-center justify-center text-sm">
                             <i class="fa-solid fa-user-plus"></i>
                         </span>
-                        Anotarme / Agregar Participante
-                    </h2>
+                        Anotarme en este Sorteo
+                    </h3>
 
-                    <form id="participant-form" onsubmit="handleParticipantSubmit(event)" class="space-y-4">
-                        <input type="hidden" id="edit-id" value="">
-
+                    <form id="join-participant-form" onsubmit="handleAddParticipantLive(event)" class="space-y-4">
                         <div>
-                            <label for="participant-name" class="block text-sm font-semibold text-slate-700 mb-1">
-                                Tu Nombre (o del participante) <span class="text-rose-500">*</span>
+                            <label for="live-part-name" class="block text-sm font-semibold text-slate-700 mb-1">
+                                Tu Nombre <span class="text-rose-500">*</span>
                             </label>
-                            <input type="text" id="participant-name" required maxlength="35"
+                            <input type="text" id="live-part-name" required maxlength="35"
                                 placeholder="Ej. Camila González"
                                 class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-rose-500 focus:ring-2 focus:ring-rose-200 outline-none text-sm transition">
                         </div>
 
                         <div>
-                            <label for="participant-gift" class="block text-sm font-semibold text-slate-700 mb-1 flex items-center justify-between">
+                            <label for="live-part-gift" class="block text-sm font-semibold text-slate-700 mb-1 flex items-center justify-between">
                                 <span>Tu Opción o Idea de Regalo</span>
                                 <span class="text-xs font-normal text-slate-400">Opcional</span>
                             </label>
-                            <textarea id="participant-gift" rows="3" maxlength="160"
+                            <textarea id="live-part-gift" rows="3" maxlength="180"
                                 placeholder="Ej. Libros de misterio, calcetines divertidos, chocolates amargos o taza térmica..."
                                 class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-rose-500 focus:ring-2 focus:ring-rose-200 outline-none text-sm transition resize-none"></textarea>
-                            <p class="text-xs text-slate-400 mt-1 flex items-center gap-1">
-                                <i class="fa-solid fa-lightbulb text-amber-400"></i>
-                                Quien te saque en el sorteo verá estas pistas.
+                        </div>
+
+                        <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200/70">
+                            <label for="live-part-pin" class="block text-xs font-bold text-slate-600 mb-1 flex items-center justify-between">
+                                <span>PIN Personal Secreto (Opcional)</span>
+                                <span class="text-[11px] font-normal text-slate-400">4 dígitos</span>
+                            </label>
+                            <input type="text" id="live-part-pin" maxlength="4" inputmode="numeric"
+                                placeholder="Ej. 2580 (para proteger tu resultado)"
+                                class="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 focus:border-rose-500 outline-none text-xs transition">
+                            <p class="text-[11px] text-slate-400 mt-1">
+                                Si pones un PIN, solo tú podrás abrir tu resultado desde la lista cuando se haga el sorteo.
                             </p>
                         </div>
 
-                        <div class="pt-1 flex gap-2">
-                            <button type="submit" id="btn-submit-participant"
-                                class="flex-1 bg-rose-600 hover:bg-rose-700 active:scale-[0.99] text-white font-bold py-3 px-4 rounded-xl shadow-sm shadow-rose-200 transition flex items-center justify-center gap-2">
-                                <i class="fa-solid fa-plus"></i>
-                                <span>Guardar en la lista</span>
-                            </button>
-
-                            <button type="button" id="btn-cancel-edit" onclick="cancelEdit()" class="hidden px-4 py-3 rounded-xl border border-slate-200 hover:bg-slate-100 text-slate-600 font-semibold text-sm transition">
-                                Cancelar
-                            </button>
-                        </div>
-                    </form>
-
-                    <!-- Post-Add Share Prompt Banner (Appears immediately after someone adds themselves) -->
-                    <div id="post-add-share-box" class="hidden mt-4 p-4 rounded-xl bg-emerald-50 border border-emerald-200 animate-pop">
-                        <div class="flex items-start gap-2.5">
-                            <i class="fa-solid fa-circle-check text-emerald-600 text-lg mt-0.5"></i>
-                            <div class="flex-1">
-                                <h4 class="font-bold text-emerald-900 text-sm">¡Listo! Ya estás anotado en el enlace</h4>
-                                <p class="text-xs text-emerald-800 mt-0.5 leading-relaxed">
-                                    Envía el enlace actualizado al grupo de WhatsApp para que el organizador y los demás vean tu opción de regalo:
-                                </p>
-                                <div class="mt-2.5 flex flex-wrap gap-2">
-                                    <button type="button" onclick="shareGroupOnWhatsApp(true)"
-                                        class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm transition">
-                                        <i class="fa-brands fa-whatsapp text-sm"></i>
-                                        <span>Reenviar al grupo</span>
-                                    </button>
-                                    <button type="button" onclick="copyGroupLink()"
-                                        class="px-3 py-1.5 rounded-lg bg-white hover:bg-emerald-100 text-emerald-800 border border-emerald-200 font-semibold text-xs flex items-center gap-1.5 transition">
-                                        <i class="fa-regular fa-copy"></i>
-                                        <span>Copiar enlace</span>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Demo Button -->
-                    <div class="mt-5 pt-4 border-t border-slate-100 flex items-center justify-between gap-2">
-                        <span class="text-xs text-slate-400">¿Quieres probar rápido?</span>
-                        <button type="button" onclick="loadSampleData()"
-                            class="text-xs font-semibold text-slate-600 hover:text-emerald-700 bg-slate-100 hover:bg-emerald-50 px-3 py-1.5 rounded-lg transition flex items-center gap-1.5">
-                            <i class="fa-solid fa-wand-magic-sparkles text-amber-500"></i>
-                            Cargar ejemplo
+                        <button type="submit" id="btn-live-submit"
+                            class="w-full bg-rose-600 hover:bg-rose-700 active:scale-[0.99] text-white font-bold py-3 px-4 rounded-xl shadow-sm shadow-rose-200 transition flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-paper-plane"></i>
+                            <span>Anotarme Ahora</span>
                         </button>
-                    </div>
+                    </form>
                 </section>
 
-                <!-- Right Column: Participants List & Draw Trigger (7 cols) -->
+                <!-- Right Column: Live Participants List & Organizer Draw Button (7 cols) -->
                 <section class="lg:col-span-7 bg-white rounded-2xl shadow-sm border border-slate-200/80 p-5 sm:p-6 flex flex-col">
                     <div class="flex flex-wrap items-center justify-between gap-2 mb-4 pb-3 border-b border-slate-100">
                         <div class="flex items-center gap-2.5">
                             <span class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center text-sm">
                                 <i class="fa-solid fa-users"></i>
                             </span>
-                            <h2 class="font-display text-lg sm:text-xl font-bold text-slate-800">
-                                Participantes Anotados
-                            </h2>
-                            <span id="participant-count-badge" class="ml-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-700">
+                            <h3 class="font-display text-lg sm:text-xl font-bold text-slate-800">
+                                Participantes en la Sala
+                            </h3>
+                            <span id="live-count-badge" class="ml-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-700">
                                 0
                             </span>
                         </div>
@@ -325,185 +372,131 @@
                     </div>
 
                     <!-- Empty State -->
-                    <div id="empty-participants" class="py-12 px-4 text-center">
+                    <div id="live-empty-state" class="py-12 px-4 text-center">
                         <div class="w-16 h-16 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-3 text-2xl">
-                            <i class="fa-solid fa-sleigh"></i>
+                            <i class="fa-solid fa-user-clock"></i>
                         </div>
-                        <h3 class="font-semibold text-slate-700 text-base">Aún no hay participantes</h3>
+                        <h4 class="font-semibold text-slate-700 text-base">Esperando participantes...</h4>
                         <p class="text-slate-500 text-sm max-w-sm mx-auto mt-1">
-                            Agrega al menos <strong>3 personas</strong> (o comparte el enlace arriba para que cada uno se anote) antes de realizar el sorteo.
+                            Comparte el enlace de arriba por WhatsApp. A medida que cada uno se anote, aparecerán aquí automáticamente.
                         </p>
                     </div>
 
-                    <!-- List -->
-                    <ul id="participants-list" class="space-y-3 mb-6 max-h-[440px] overflow-y-auto pr-1">
+                    <!-- Live List -->
+                    <ul id="live-participants-list" class="space-y-3 mb-6 max-h-[450px] overflow-y-auto pr-1">
                         <!-- Rendered dynamically -->
                     </ul>
 
-                    <!-- Draw Footer -->
+                    <!-- Organizer Draw Trigger -->
                     <div class="mt-auto pt-4 border-t border-slate-100">
-                        <div id="min-warning" class="mb-3 px-3.5 py-2.5 rounded-xl bg-amber-50 border border-amber-200/70 text-amber-800 text-xs sm:text-sm flex items-center gap-2.5">
+                        <div id="live-min-warning" class="mb-3 px-3.5 py-2.5 rounded-xl bg-amber-50 border border-amber-200/70 text-amber-800 text-xs sm:text-sm flex items-center gap-2.5">
                             <i class="fa-solid fa-circle-info text-amber-500 shrink-0"></i>
-                            <span>Se necesitan al menos <strong>3 participantes</strong> para realizar el sorteo.</span>
+                            <span>Se necesitan al menos <strong>3 participantes</strong> para poder realizar el sorteo.</span>
                         </div>
 
-                        <button type="button" id="btn-start-draw" onclick="performDraw()" disabled
+                        <button type="button" id="btn-live-draw" onclick="initiateDrawCheck()" disabled
                             class="w-full py-3.5 px-6 rounded-xl font-display font-bold text-base sm:text-lg text-white bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-700 hover:to-red-700 disabled:from-slate-300 disabled:to-slate-300 disabled:cursor-not-allowed shadow-md shadow-rose-200/60 disabled:shadow-none transition active:scale-[0.99] flex items-center justify-center gap-2.5">
                             <i class="fa-solid fa-shuffle"></i>
-                            <span>¡Realizar Sorteo y Generar Enlaces Secretos!</span>
+                            <span>¡Cerrar Lista y Realizar Sorteo!</span>
                         </button>
                     </div>
                 </section>
             </div>
-        </div>
 
-        <!-- ================================================================= -->
-        <!-- VIEW 2: ORGANIZER DRAW RESULTS & PRIVATE LINKS                    -->
-        <!-- ================================================================= -->
-        <div id="results-view" class="hidden space-y-6">
-            
-            <!-- Summary Banner -->
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-5 sm:p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-                <div>
-                    <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold mb-1.5">
-                        <i class="fa-solid fa-check-circle"></i> ¡Sorteo Listo! Enlaces Privados Generados
-                    </div>
-                    <h2 id="display-event-title" class="font-display text-xl sm:text-2xl font-bold text-slate-800">
-                        Intercambio de Amigo Secreto
-                    </h2>
-                    <div class="flex flex-wrap items-center gap-x-5 gap-y-1.5 mt-2 text-sm text-slate-600">
-                        <span id="display-event-budget" class="flex items-center gap-1.5">
-                            <i class="fa-solid fa-coins text-amber-500"></i>
-                            <span>Presupuesto: Libre</span>
-                        </span>
-                        <span id="display-event-date" class="flex items-center gap-1.5">
-                            <i class="fa-regular fa-calendar text-rose-500"></i>
-                            <span>Fecha: Por confirmar</span>
-                        </span>
-                    </div>
-                </div>
-
-                <div class="flex flex-wrap items-center gap-2.5 w-full md:w-auto">
-                    <button type="button" onclick="backToEdit()"
-                        class="flex-1 md:flex-initial px-4 py-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold text-sm transition flex items-center justify-center gap-2">
-                        <i class="fa-solid fa-arrow-left"></i>
-                        <span>Volver a la Lista</span>
-                    </button>
-                    <button type="button" onclick="performDraw(true)"
-                        class="flex-1 md:flex-initial px-4 py-2.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200/80 font-semibold text-sm transition flex items-center justify-center gap-2">
-                        <i class="fa-solid fa-dice"></i>
-                        <span>Re-sortear</span>
-                    </button>
-                </div>
-            </div>
-
-            <!-- How Private Links Work Box -->
-            <div class="bg-gradient-to-r from-amber-50 to-rose-50 border border-amber-200/80 rounded-2xl p-4 sm:p-5 flex items-start gap-3.5">
-                <div class="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0 mt-0.5 shadow-sm">
-                    <i class="fa-solid fa-user-secret text-lg"></i>
-                </div>
-                <div>
-                    <h3 class="font-bold text-slate-800 text-sm sm:text-base">Envía a cada persona su enlace privado</h3>
-                    <p class="text-slate-600 text-xs sm:text-sm mt-0.5 leading-relaxed">
-                        Cada botón de <strong>WhatsApp</strong> o <strong>Copiar Enlace</strong> genera una URL única que contiene <strong>únicamente</strong> el resultado de esa persona (ni tú ni ellos verán los resultados de los demás). Si están reunidos en persona, también pueden usar <em>"Ver aquí"</em>.
-                    </p>
-                </div>
-            </div>
-
-            <!-- Progress Header -->
-            <div class="flex items-center justify-between text-xs sm:text-sm text-slate-500 px-1">
-                <span>Lista de participantes y sus enlaces secretos:</span>
-                <span id="sent-progress" class="font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg">
-                    0 de 0 enviados/vistos
-                </span>
-            </div>
-
-            <!-- Participants Private Links List -->
-            <div id="draw-cards-list" class="space-y-3">
-                <!-- Rendered dynamically -->
-            </div>
-        </div>
-
-        <!-- ================================================================= -->
-        <!-- VIEW 3: INDIVIDUAL SECRET REVEAL VIEW (#r=...)                    -->
-        <!-- ================================================================= -->
-        <div id="single-reveal-view" class="hidden max-w-lg mx-auto py-4">
-            <div class="bg-white rounded-3xl shadow-xl border border-slate-200/80 overflow-hidden animate-pop">
+            <!-- SUB-VIEW B: DRAW COMPLETED (Everyone reveals their own secret!) -->
+            <div id="room-drawn-section" class="hidden space-y-6">
                 
-                <!-- Top Festive Header -->
-                <div class="bg-gradient-to-br from-rose-600 via-red-600 to-rose-700 p-7 text-center text-white relative overflow-hidden">
-                    <i class="fa-solid fa-gift text-8xl absolute -left-4 -bottom-4 opacity-10 -rotate-12"></i>
-                    <i class="fa-solid fa-snowflake text-7xl absolute -right-3 -top-3 opacity-10"></i>
+                <!-- Instructions Banner -->
+                <div class="bg-white rounded-2xl shadow-sm border border-emerald-200 p-5 sm:p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                    <div class="flex items-start gap-3.5">
+                        <div class="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center text-2xl shrink-0">
+                            <i class="fa-solid fa-gift"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-display text-xl font-bold text-slate-800">
+                                ¡El sorteo ya se realizó!
+                            </h3>
+                            <p class="text-slate-600 text-xs sm:text-sm mt-0.5 leading-relaxed">
+                                Busca tu nombre en la lista y presiona <strong>"Ver mi Amigo Secreto"</strong> para descubrir a quién te toca regalar y qué deseo escribió.
+                            </p>
+                        </div>
+                    </div>
 
+                    <div class="flex items-center gap-2 w-full md:w-auto shrink-0">
+                        <button type="button" onclick="initiateReopenRegistration()"
+                            class="flex-1 md:flex-initial px-4 py-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold text-xs sm:text-sm transition flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-unlock"></i>
+                            <span>Reabrir Lista (Organizador)</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Progress -->
+                <div class="flex items-center justify-between text-xs sm:text-sm text-slate-500 px-1">
+                    <span>Haz clic en tu nombre para ver tu resultado:</span>
+                    <span id="live-revealed-progress" class="font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg">
+                        0 de 0 descubiertos
+                    </span>
+                </div>
+
+                <!-- Participant Reveal Cards -->
+                <div id="live-reveal-cards" class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                    <!-- Rendered dynamically -->
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ================================================================= -->
+        <!-- VIEW 2: SOLO DIRECT LINK REVEAL (#r=...)                          -->
+        <!-- ================================================================= -->
+        <div id="solo-reveal-view" class="hidden max-w-lg mx-auto py-4">
+            <div class="bg-white rounded-3xl shadow-xl border border-slate-200/80 overflow-hidden animate-pop">
+                <div class="bg-gradient-to-br from-rose-600 via-red-600 to-rose-700 p-7 text-center text-white relative overflow-hidden">
                     <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/15 text-amber-200 text-xs font-bold uppercase tracking-wider mb-3">
-                        <i class="fa-solid fa-lock"></i> Mensaje Confidencial
+                        <i class="fa-solid fa-lock"></i> Resultado Privado
                     </span>
                     <h2 class="font-display text-2xl sm:text-3xl font-bold">
                         ¡Hola, <span id="solo-giver-name" class="text-amber-300">Participante</span>!
                     </h2>
-                    <p id="solo-event-title" class="text-rose-100 text-sm mt-1">
-                        Intercambio de Amigo Secreto
-                    </p>
+                    <p id="solo-event-title" class="text-rose-100 text-sm mt-1">Amigo Secreto</p>
                 </div>
 
-                <!-- Step A: Unopened Envelope -->
                 <div id="solo-locked-box" class="p-7 text-center">
                     <div class="w-20 h-20 rounded-3xl bg-amber-100 text-amber-600 flex items-center justify-center mx-auto mb-4 text-4xl shadow-inner animate-float">
                         <i class="fa-solid fa-envelope-open-text"></i>
                     </div>
-                    <h3 class="font-display text-xl font-bold text-slate-800">
-                        Tu Amigo Secreto ya fue sorteado
-                    </h3>
-                    <p class="text-slate-600 text-sm mt-2 leading-relaxed">
-                        Asegúrate de que nadie esté mirando tu pantalla antes de abrir el sobre.
-                    </p>
+                    <h3 class="font-display text-xl font-bold text-slate-800">Tu Amigo Secreto está listo</h3>
+                    <p class="text-slate-600 text-sm mt-2">Asegúrate de que nadie esté mirando tu pantalla.</p>
                     <button type="button" onclick="revealSoloSecret()"
-                        class="mt-6 w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-display font-bold text-lg shadow-lg shadow-emerald-200 transition active:scale-[0.99] flex items-center justify-center gap-2.5">
+                        class="mt-6 w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-display font-bold text-lg shadow-lg transition flex items-center justify-center gap-2.5">
                         <i class="fa-solid fa-wand-magic-sparkles"></i>
                         <span>Descubrir a quién le regalo</span>
                     </button>
                 </div>
 
-                <!-- Step B: Revealed Secret -->
                 <div id="solo-unlocked-box" class="hidden p-6 sm:p-7 space-y-5">
-                    <div class="text-center bg-gradient-to-b from-emerald-50 to-teal-50/60 border border-emerald-200/80 rounded-2xl p-5">
-                        <span class="text-xs font-bold uppercase tracking-wider text-emerald-700">
-                            Te toca hacerle un regalo a:
-                        </span>
-                        <h3 id="solo-receiver-name" class="font-display text-3xl sm:text-4xl font-bold text-slate-900 mt-1.5">
-                            Nombre Amigo
-                        </h3>
+                    <div class="text-center bg-emerald-50 border border-emerald-200 rounded-2xl p-5">
+                        <span class="text-xs font-bold uppercase tracking-wider text-emerald-700">Te toca regalarle a:</span>
+                        <h3 id="solo-receiver-name" class="font-display text-3xl sm:text-4xl font-bold text-slate-900 mt-1.5">Nombre</h3>
                     </div>
 
-                    <!-- Gift Wishlist Box -->
-                    <div class="bg-amber-50 border border-amber-200/80 rounded-2xl p-4 sm:p-5">
+                    <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4 sm:p-5">
                         <div class="flex items-center gap-2 text-amber-800 font-bold text-xs uppercase tracking-wider mb-1.5">
                             <i class="fa-solid fa-gift text-amber-500"></i>
-                            <span>Opción / Idea de Regalo que pidió:</span>
+                            <span>Opción / Idea de Regalo:</span>
                         </div>
-                        <p id="solo-receiver-gift" class="text-slate-800 text-sm sm:text-base font-medium leading-relaxed">
-                            "Idea de regalo"
-                        </p>
+                        <p id="solo-receiver-gift" class="text-slate-800 text-sm sm:text-base font-medium leading-relaxed">"Regalo"</p>
                     </div>
 
-                    <!-- Event Details -->
-                    <div id="solo-event-details" class="bg-slate-50 rounded-xl p-4 border border-slate-200/70 text-xs sm:text-sm text-slate-600 space-y-1.5">
-                        <!-- Rendered dynamically -->
-                    </div>
+                    <div id="solo-event-details" class="bg-slate-50 rounded-xl p-4 border border-slate-200/70 text-xs sm:text-sm text-slate-600 space-y-1.5"></div>
 
-                    <div class="pt-2 flex flex-col gap-2.5">
-                        <button type="button" onclick="hideSoloSecret()"
-                            class="w-full py-3 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm transition flex items-center justify-center gap-2">
-                            <i class="fa-solid fa-eye-slash"></i>
-                            <span>Ocultar resultado de la pantalla</span>
-                        </button>
-                        <button type="button" onclick="exitSoloViewToNewGroup()"
-                            class="w-full py-2.5 px-4 rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-100 font-semibold text-xs transition">
-                            Crear mi propio sorteo de Amigo Secreto
-                        </button>
-                    </div>
+                    <button type="button" onclick="hideSoloSecret()"
+                        class="w-full py-3 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-eye-slash"></i>
+                        <span>Ocultar resultado</span>
+                    </button>
                 </div>
-
             </div>
         </div>
 
@@ -511,51 +504,61 @@
 
     <!-- Footer -->
     <footer class="mt-auto py-6 text-center text-xs text-slate-400 border-t border-slate-200/60 bg-white/50">
-        <p>Hecho con <i class="fa-solid fa-heart text-rose-500"></i> &bull; Funciona 100% sin servidores codificando los datos en el enlace.</p>
+        <p>Hecho con <i class="fa-solid fa-heart text-rose-500"></i> &bull; Sincronizado en tiempo real con Firebase Realtime Database.</p>
     </footer>
 
     <!-- ===================================================================== -->
-    <!-- MODAL 1: IN-PERSON LOCAL REVEAL MODAL                                 -->
+    <!-- MODAL 1: SELF-REVEAL MODAL (WITH OPTIONAL PIN CHECK)                  -->
     <!-- ===================================================================== -->
-    <div id="reveal-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm">
+    <div id="self-reveal-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-slate-900/75 backdrop-blur-sm">
         <div class="bg-white rounded-3xl max-w-md w-full shadow-2xl overflow-hidden animate-pop border border-slate-100">
             
-            <!-- Step 1: Confirm Identity -->
-            <div id="reveal-step-confirm" class="p-6 sm:p-8 text-center">
+            <!-- Step 1: Confirm Identity / Enter PIN -->
+            <div id="self-step-confirm" class="p-6 sm:p-8 text-center">
                 <div class="w-16 h-16 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center mx-auto mb-4 text-3xl">
-                    <i class="fa-solid fa-shield-halved"></i>
+                    <i class="fa-solid fa-user-lock"></i>
                 </div>
                 <span class="text-xs font-bold uppercase tracking-wider text-rose-600 bg-rose-50 px-3 py-1 rounded-full">
-                    Zona Privada
+                    Verificación de Identidad
                 </span>
                 <h3 class="font-display text-2xl font-bold text-slate-800 mt-3">
-                    ¿Eres <span id="confirm-giver-name" class="text-rose-600">Nombre</span>?
+                    ¿Eres <span id="self-confirm-name" class="text-rose-600">Nombre</span>?
                 </h3>
-                <p class="text-slate-600 text-sm mt-2 leading-relaxed">
-                    Asegúrate de que nadie más esté mirando la pantalla antes de descubrir tu resultado.
+                <p id="self-confirm-desc" class="text-slate-600 text-sm mt-2 leading-relaxed">
+                    Asegúrate de que nadie más esté mirando tu pantalla antes de abrir tu resultado.
                 </p>
 
-                <div class="mt-7 flex flex-col sm:flex-row gap-3">
-                    <button type="button" onclick="closeRevealModal()"
+                <!-- Optional PIN Input -->
+                <div id="self-pin-box" class="hidden mt-4 text-left">
+                    <label for="self-pin-input" class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
+                        Ingresa tu PIN personal de 4 dígitos:
+                    </label>
+                    <input type="password" id="self-pin-input" maxlength="4" inputmode="numeric"
+                        placeholder="••••"
+                        class="w-full text-center tracking-[0.5em] font-mono text-xl py-2.5 rounded-xl border border-slate-300 focus:border-rose-500 focus:ring-2 focus:ring-rose-200 outline-none">
+                </div>
+
+                <div class="mt-6 flex flex-col sm:flex-row gap-3">
+                    <button type="button" onclick="closeSelfRevealModal()"
                         class="flex-1 py-3 px-4 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-600 font-semibold text-sm transition">
                         Cancelar
                     </button>
-                    <button type="button" onclick="confirmAndShowSecret()"
+                    <button type="button" onclick="verifyAndShowSelfSecret()"
                         class="flex-1 py-3 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-sm shadow-md shadow-rose-200 transition flex items-center justify-center gap-2">
                         <i class="fa-solid fa-eye"></i>
-                        <span>Sí, ver mi secreto</span>
+                        <span>Ver mi Amigo Secreto</span>
                     </button>
                 </div>
             </div>
 
-            <!-- Step 2: Show Secret -->
-            <div id="reveal-step-secret" class="hidden">
+            <!-- Step 2: Secret Result -->
+            <div id="self-step-result" class="hidden">
                 <div class="bg-gradient-to-br from-emerald-600 to-teal-700 p-6 text-center text-white relative overflow-hidden">
                     <i class="fa-solid fa-gift text-7xl absolute -right-4 -bottom-4 opacity-15 rotate-12"></i>
                     <p class="text-emerald-100 text-xs font-semibold uppercase tracking-wider">
-                        Hola <span id="secret-giver-name" class="underline">Nombre</span>, tu Amigo Secreto es:
+                        Hola <span id="self-result-giver" class="underline">Nombre</span>, tu Amigo Secreto es:
                     </p>
-                    <h3 id="secret-receiver-name" class="font-display text-3xl sm:text-4xl font-bold mt-2 tracking-tight">
+                    <h3 id="self-result-target" class="font-display text-3xl sm:text-4xl font-bold mt-2 tracking-tight">
                         Nombre Receptor
                     </h3>
                 </div>
@@ -566,15 +569,15 @@
                             <i class="fa-solid fa-wand-sparkles text-amber-500"></i>
                             <span>Opción / Deseo de Regalo:</span>
                         </div>
-                        <p id="secret-receiver-gift" class="text-slate-800 text-sm sm:text-base font-medium leading-relaxed">
+                        <p id="self-result-wish" class="text-slate-800 text-sm sm:text-base font-medium leading-relaxed">
                             "Regalo"
                         </p>
                     </div>
 
-                    <button type="button" onclick="markDoneAndCloseModal()"
+                    <button type="button" onclick="closeSelfRevealModal()"
                         class="w-full py-3.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm shadow-md transition flex items-center justify-center gap-2">
                         <i class="fa-solid fa-eye-slash"></i>
-                        <span>¡Entendido! Ocultar y continuar</span>
+                        <span>¡Listo! Cerrar y ocultar</span>
                     </button>
                 </div>
             </div>
@@ -583,299 +586,1029 @@
     </div>
 
     <!-- ===================================================================== -->
-    <!-- MODAL 2: HOSTING & SHARING GUIDE MODAL                                -->
+    <!-- MODAL 2: ADMIN PIN VERIFICATION MODAL                                 -->
     <!-- ===================================================================== -->
-    <div id="help-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-        <div class="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-7 shadow-2xl animate-pop max-h-[90vh] overflow-y-auto">
+    <div id="admin-pin-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl animate-pop text-center">
+            <div class="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mx-auto mb-3 text-xl">
+                <i class="fa-solid fa-key"></i>
+            </div>
+            <h3 class="font-display text-lg font-bold text-slate-800">Clave de Organizador</h3>
+            <p class="text-slate-500 text-xs sm:text-sm mt-1">
+                Esta sala está protegida. Ingresa la clave que definiste al crearla:
+            </p>
+            <input type="password" id="admin-pin-verify-input" maxlength="6" inputmode="numeric"
+                placeholder="Clave"
+                class="mt-4 w-full text-center tracking-widest font-mono text-lg py-2.5 rounded-xl border border-slate-300 focus:border-rose-500 outline-none">
+            <div class="mt-5 flex gap-2.5">
+                <button type="button" onclick="closeAdminPinModal()"
+                    class="flex-1 py-2.5 px-4 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-600 font-semibold text-sm">
+                    Cancelar
+                </button>
+                <button type="button" onclick="submitAdminPinVerification()"
+                    class="flex-1 py-2.5 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-sm">
+                    Continuar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- MODAL 3: FIREBASE CONFIGURATION & GUIDE MODAL                         -->
+    <!-- ===================================================================== -->
+    <div id="firebase-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm">
+        <div class="bg-white rounded-3xl max-w-2xl w-full p-6 sm:p-7 shadow-2xl animate-pop max-h-[90vh] overflow-y-auto">
             <div class="flex items-center justify-between pb-3 border-b border-slate-100">
                 <h3 class="font-display text-xl font-bold text-slate-800 flex items-center gap-2">
-                    <i class="fa-solid fa-rocket text-rose-600"></i>
-                    Cómo publicar y compartir gratis
+                    <i class="fa-solid fa-fire text-amber-500"></i>
+                    Conectar Firebase Realtime Database
                 </h3>
-                <button type="button" onclick="closeHelpModal()" class="w-8 h-8 rounded-lg text-slate-400 hover:bg-slate-100 flex items-center justify-center">
+                <button type="button" onclick="closeFirebaseSetupModal()" class="w-8 h-8 rounded-lg text-slate-400 hover:bg-slate-100 flex items-center justify-center">
                     <i class="fa-solid fa-xmark"></i>
                 </button>
             </div>
 
-            <div class="mt-4 space-y-4 text-sm text-slate-600 leading-relaxed">
-                <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/70">
-                    <h4 class="font-bold text-slate-800 mb-1 flex items-center gap-2">
-                        <span class="w-5 h-5 rounded-full bg-rose-600 text-white text-xs flex items-center justify-center">1</span>
-                        Sube este archivo a Internet (Gratis, 30 seg)
-                    </h4>
-                    <p class="text-xs sm:text-sm">
-                        Descarga este archivo HTML, cámbiale el nombre a <code class="bg-white px-1.5 py-0.5 rounded border text-rose-700 font-mono text-xs">index.html</code> y arrástralo dentro de <strong>app.netlify.com/drop</strong> (o súbelo a GitHub Pages / Vercel). Obtendrás un enlace web real.
+            <div class="mt-4 space-y-4 text-xs sm:text-sm text-slate-600 leading-relaxed">
+                <p>
+                    Para que todos entren al mismo enlace a la vez y se vean en vivo, crea una base de datos gratuita en <strong>console.firebase.google.com</strong> (toma 2 minutos) y pega aquí tu bloque <code class="bg-slate-100 px-1.5 py-0.5 rounded font-mono text-rose-700">firebaseConfig</code>:
+                </p>
+
+                <div class="bg-slate-900 text-slate-100 rounded-2xl p-4 font-mono text-xs overflow-x-auto">
+                    <div class="text-slate-400 mb-1">// Ejemplo de lo que te entrega Firebase:</div>
+                    <pre class="text-emerald-300">{
+  "apiKey": "AIzaSy...",
+  "authDomain": "tu-proyecto.firebaseapp.com",
+  "databaseURL": "https://tu-proyecto-default-rtdb.firebaseio.com",
+  "projectId": "tu-proyecto",
+  "storageBucket": "tu-proyecto.appspot.com",
+  "messagingSenderId": "123456789",
+  "appId": "1:123456789:web:abcdef"
+}</pre>
+                </div>
+
+                <div>
+                    <label for="firebase-json-input" class="block font-bold text-slate-800 mb-1.5">
+                        Prueba rápida: Pega aquí tu <code class="font-mono text-rose-600">firebaseConfig</code> (en formato JSON o JS):
+                    </label>
+                    <textarea id="firebase-json-input" rows="5"
+                        placeholder='Pega aquí el objeto { apiKey: "...", databaseURL: "https://...", ... }'
+                        class="w-full p-3 rounded-xl border border-slate-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none font-mono text-xs"></textarea>
+                    <p class="text-[11px] text-slate-400 mt-1">
+                        Nota: Para que el enlace funcione en los teléfonos de tus amigos, recuerda también pegar estas mismas credenciales dentro del archivo HTML antes de subirlo a GitHub.
                     </p>
                 </div>
 
-                <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/70">
-                    <h4 class="font-bold text-slate-800 mb-1 flex items-center gap-2">
-                        <span class="w-5 h-5 rounded-full bg-emerald-600 text-white text-xs flex items-center justify-center">2</span>
-                        Comparte el enlace del grupo (<code class="text-xs font-mono">#g=...</code>)
-                    </h4>
-                    <p class="text-xs sm:text-sm">
-                        Envía el enlace por WhatsApp. Cuando cada participante abra el link en su teléfono y escriba su nombre y opción de regalo, la app actualizará el enlace para que lo reenvíe al grupo.
-                    </p>
+                <div class="flex flex-wrap items-center justify-between gap-2 pt-2">
+                    <button type="button" onclick="clearCustomFirebaseConfig()" class="text-xs text-rose-600 hover:underline font-semibold">
+                        Borrar configuración guardada
+                    </button>
+                    <div class="flex gap-2">
+                        <button type="button" onclick="closeFirebaseSetupModal()"
+                            class="px-4 py-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-600 font-semibold text-xs sm:text-sm">
+                            Cerrar
+                        </button>
+                        <button type="button" onclick="saveFirebaseConfigFromUI()"
+                            class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm shadow-sm">
+                            Guardar y Conectar
+                        </button>
+                    </div>
                 </div>
-
-                <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/70">
-                    <h4 class="font-bold text-slate-800 mb-1 flex items-center gap-2">
-                        <span class="w-5 h-5 rounded-full bg-amber-500 text-white text-xs flex items-center justify-center">3</span>
-                        Sortea y envía los enlaces secretos (<code class="text-xs font-mono">#r=...</code>)
-                    </h4>
-                    <p class="text-xs sm:text-sm">
-                        Cuando todos estén anotados, presiona <strong>Realizar Sorteo</strong> y envíale a cada uno su enlace privado por WhatsApp. Cada enlace contiene únicamente el nombre y deseo de su amigo secreto.
-                    </p>
-                </div>
-            </div>
-
-            <button type="button" onclick="closeHelpModal()"
-                class="mt-6 w-full py-3 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm transition">
-                ¡Entendido!
-            </button>
-        </div>
-    </div>
-
-    <!-- ===================================================================== -->
-    <!-- MODAL 3: CONFIRM RESET MODAL                                          -->
-    <!-- ===================================================================== -->
-    <div id="reset-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-        <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl animate-pop text-center">
-            <div class="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mx-auto mb-3 text-xl">
-                <i class="fa-solid fa-triangle-exclamation"></i>
-            </div>
-            <h3 class="font-display text-lg font-bold text-slate-800">¿Iniciar un grupo nuevo?</h3>
-            <p class="text-slate-500 text-sm mt-1.5">
-                Se limpiará la lista actual y el enlace volverá a estar en blanco para crear otro sorteo.
-            </p>
-            <div class="mt-6 flex gap-3">
-                <button type="button" onclick="closeConfirmResetModal()"
-                    class="flex-1 py-2.5 px-4 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold text-sm transition">
-                    Cancelar
-                </button>
-                <button type="button" onclick="executeFullReset()"
-                    class="flex-1 py-2.5 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-semibold text-sm transition">
-                    Sí, limpiar
-                </button>
             </div>
         </div>
     </div>
 
     <!-- ===================================================================== -->
-    <!-- JAVASCRIPT: URL HASH ENCODING, STATE & DRAW LOGIC                     -->
+    <!-- FIREBASE MODULAR SDK + APPLICATION LOGIC                              -->
     <!-- ===================================================================== -->
-    <script>
-        const STORAGE_KEY = 'amigo_secreto_url_v2';
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getDatabase, ref, set, push, onValue, update, remove, get } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-        // Main Group State
-        let state = {
-            eventTitle: '',
-            eventBudget: '',
-            eventDate: '',
-            participants: [], // [{ id, name, gift }]
-            assignments: {},  // { giverId: receiverId }
-            sentIds: [],      // [giverId]
-            isDrawn: false,
-            hideWishesInSetup: false
+        // =====================================================================
+        // PASO 1: PEGA AQUÍ TUS CREDENCIALES DE FIREBASE ANTES DE SUBIR A GITHUB
+        // =====================================================================
+        const DEFAULT_FIREBASE_CONFIG = {
+            apiKey: "AIzaSyDLpv192nR4_bBDQUdC1rq-V2VuGS_-4NA",
+            authDomain: "amigo-secreto-c9421.firebaseapp.com",
+            databaseURL: "https://amigo-secreto-c9421-default-rtdb.firebaseio.com",
+            projectId: "amigo-secreto-c9421",
+            storageBucket: "amigo-secreto-c9421.firebasestorage.app",
+            messagingSenderId: "661283751361",
+            appId: "1:661283751361:web:a3fa363e3775e04bbe9b40"
         };
 
-        // Solo Reveal Payload (when opened via #r=...)
-        let soloRevealData = null; // { g: giverName, r: receiverName, w: receiverGift, t: eventTitle, b: budget, d: date }
+        const LS_CONFIG_KEY = 'amigo_secreto_fb_config_v1';
+        const LS_RECENT_ROOMS_KEY = 'amigo_secreto_recent_rooms_v1';
+        const LS_LOCAL_FALLBACK_KEY = 'amigo_secreto_local_rooms_v1';
 
-        // Active modal giver ID
-        let activeModalGiverId = null;
+        let db = null;
+        let isFirebaseReady = false;
+        let currentRoomId = null;
+        let unsubscribeRoom = null;
+
+        // Live Room Data State
+        let roomData = {
+            info: { title: '', budget: '', date: '', adminPin: '', isDrawn: false },
+            participantes: {}, // { pushId: { name, gift, pin, createdAt } }
+            sorteo: {}         // { pushId: { targetId, targetName, targetWish, revealed } }
+        };
+
+        let hideWishes = false;
+        let activeRevealParticipantId = null;
+        let pendingAdminAction = null; // 'draw' | 'reopen'
+        let soloRevealData = null;
 
         // ---------------------------------------------------------------------
-        // UNICODE-SAFE BASE64 URL ENCODING / DECODING
+        // FIREBASE INITIALIZATION
         // ---------------------------------------------------------------------
-        function encodePayload(obj) {
+        function getActiveFirebaseConfig() {
+            // Check if user pasted config via UI first, otherwise use DEFAULT_FIREBASE_CONFIG
             try {
-                const jsonStr = JSON.stringify(obj);
-                const utf8Bytes = new TextEncoder().encode(jsonStr);
-                let binary = '';
-                for (let i = 0; i < utf8Bytes.length; i++) {
-                    binary += String.fromCharCode(utf8Bytes[i]);
+                const saved = localStorage.getItem(LS_CONFIG_KEY);
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    if (parsed && parsed.databaseURL && !parsed.databaseURL.includes('PEGA_AQUI')) {
+                        return parsed;
+                    }
                 }
-                // URL-safe Base64 (+ -> -, / -> _, strip =)
-                return btoa(binary)
-                    .replace(/\+/g, '-')
-                    .replace(/\//g, '_')
-                    .replace(/=+$/, '');
-            } catch (e) {
-                console.error('Error encoding URL payload:', e);
-                return '';
-            }
+            } catch (e) {}
+            return DEFAULT_FIREBASE_CONFIG;
         }
 
-        function decodePayload(encodedStr) {
-            try {
-                // Restore standard Base64
-                let base64 = encodedStr.replace(/-/g, '+').replace(/_/g, '/');
-                while (base64.length % 4) {
-                    base64 += '=';
-                }
-                const binary = atob(base64);
-                const bytes = new Uint8Array(binary.length);
-                for (let i = 0; i < binary.length; i++) {
-                    bytes[i] = binary.charCodeAt(i);
-                }
-                const jsonStr = new TextDecoder().decode(bytes);
-                return JSON.parse(jsonStr);
-            } catch (e) {
-                console.error('Error decoding URL payload:', e);
-                return null;
-            }
-        }
+        function initFirebase() {
+            const cfg = getActiveFirebaseConfig();
+            const badge = document.getElementById('connection-badge');
+            const banner = document.getElementById('firebase-warning-banner');
 
-        // Compact serializer for Group URL (#g=...) to keep URLs as short as possible
-        function buildGroupShareURL() {
-            const compact = {
-                t: state.eventTitle || '',
-                b: state.eventBudget || '',
-                d: state.eventDate || '',
-                p: state.participants.map(item => [item.name, item.gift || ''])
-            };
-            const hash = '#g=' + encodePayload(compact);
-            const baseUrl = window.location.href.split('#')[0];
-            return baseUrl + hash;
-        }
-
-        // Compact serializer for Individual Secret Reveal URL (#r=...)
-        function buildPersonalRevealURL(giverId) {
-            const giver = state.participants.find(p => p.id === giverId);
-            const receiverId = state.assignments[giverId];
-            const receiver = state.participants.find(p => p.id === receiverId);
-            if (!giver || !receiver) return window.location.href;
-
-            const secretPayload = {
-                g: giver.name,
-                r: receiver.name,
-                w: receiver.gift || '',
-                t: state.eventTitle || '',
-                b: state.eventBudget || '',
-                d: state.eventDate || ''
-            };
-            const hash = '#r=' + encodePayload(secretPayload);
-            const baseUrl = window.location.href.split('#')[0];
-            return baseUrl + hash;
-        }
-
-        // Sync current group state into the browser URL hash & localStorage
-        function syncStateToUrlAndStorage() {
-            try {
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-            } catch (e) {
-                console.warn('localStorage unavailable:', e);
+            if (!cfg || !cfg.databaseURL || cfg.databaseURL.includes('PEGA_AQUI') || !cfg.databaseURL.startsWith('http')) {
+                isFirebaseReady = false;
+                badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-300"></span><span>Modo Local (Sin Firebase)</span>`;
+                banner.classList.remove('hidden');
+                return;
             }
 
-            if (soloRevealData) return; // Don't overwrite #r= when viewing a personal secret
-
-            const hasData = state.eventTitle || state.eventBudget || state.eventDate || state.participants.length > 0;
-            if (hasData) {
-                const compact = {
-                    t: state.eventTitle || '',
-                    b: state.eventBudget || '',
-                    d: state.eventDate || '',
-                    p: state.participants.map(item => [item.name, item.gift || ''])
-                };
-                const newHash = '#g=' + encodePayload(compact);
-                history.replaceState(null, '', newHash);
-            } else {
-                history.replaceState(null, '', window.location.pathname + window.location.search);
+            try {
+                const app = initializeApp(cfg);
+                db = getDatabase(app);
+                isFirebaseReady = true;
+                banner.classList.add('hidden');
+                badge.className = "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/25 border border-emerald-300/30 text-emerald-100 text-xs font-semibold tracking-wide";
+                badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-300 live-dot"></span><span>Conectado en Vivo</span>`;
+            } catch (err) {
+                console.error("Firebase init error:", err);
+                isFirebaseReady = false;
+                badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-rose-300"></span><span>Error en credenciales Firebase</span>`;
+                banner.classList.remove('hidden');
             }
         }
 
         // ---------------------------------------------------------------------
-        // INITIALIZATION & URL HASH PARSING
+        // ROUTING & HASH PARSING (#sala=CODIGO or #r=SOLO)
         // ---------------------------------------------------------------------
         window.addEventListener('DOMContentLoaded', () => {
-            if (window.location.protocol === 'file:') {
-                document.getElementById('local-file-banner').classList.remove('hidden');
-            }
-            initFromUrlOrStorage();
-            renderApp();
+            initFirebase();
+            handleRouteChange();
         });
 
         window.addEventListener('hashchange', () => {
-            initFromUrlOrStorage();
-            renderApp();
+            handleRouteChange();
         });
 
-        function initFromUrlOrStorage() {
+        function handleRouteChange() {
             const hash = window.location.hash || '';
 
-            // Case 1: Individual Secret Reveal Link (#r=...)
+            // Cleanup previous listener
+            if (unsubscribeRoom) {
+                unsubscribeRoom();
+                unsubscribeRoom = null;
+            }
+
+            // 1. Solo Reveal Link (#r=...)
             if (hash.startsWith('#r=')) {
                 const decoded = decodePayload(hash.slice(3));
                 if (decoded && decoded.g && decoded.r) {
                     soloRevealData = decoded;
+                    currentRoomId = null;
+                    showView('solo');
+                    renderSoloRevealView();
                     return;
-                } else {
-                    showToast('El enlace secreto parece estar incompleto o dañado.', 'error');
                 }
             }
 
             soloRevealData = null;
 
-            // Case 2: Shared Group Registration Link (#g=...)
-            if (hash.startsWith('#g=')) {
-                const decoded = decodePayload(hash.slice(3));
-                if (decoded && Array.isArray(decoded.p)) {
-                    state.eventTitle = decoded.t || '';
-                    state.eventBudget = decoded.b || '';
-                    state.eventDate = decoded.d || '';
-                    state.participants = decoded.p.map((pair, idx) => ({
-                        id: 'p_' + idx + '_' + Math.random().toString(36).substring(2, 6),
-                        name: Array.isArray(pair) ? (pair[0] || '') : '',
-                        gift: Array.isArray(pair) ? (pair[1] || '') : ''
-                    })).filter(p => p.name.trim() !== '');
-                    state.isDrawn = false;
-                    state.assignments = {};
-                    state.sentIds = [];
+            // 2. Room Link (#sala=CODIGO)
+            if (hash.startsWith('#sala=')) {
+                const code = decodeURIComponent(hash.slice(6)).trim().toLowerCase();
+                if (code) {
+                    enterRoom(code);
                     return;
-                } else {
-                    showToast('El enlace del grupo está incompleto. Revisa que se haya copiado completo.', 'error');
                 }
             }
 
-            // Case 3: Fallback to localStorage
-            try {
-                const saved = localStorage.getItem(STORAGE_KEY);
-                if (saved) {
-                    const parsed = JSON.parse(saved);
-                    state = { ...state, ...parsed };
-                    syncStateToUrlAndStorage();
+            // 3. Default: Lobby
+            currentRoomId = null;
+            document.getElementById('header-room-pill').classList.add('hidden');
+            showView('lobby');
+            renderRecentRooms();
+        }
+
+        function showView(viewName) {
+            document.getElementById('lobby-view').classList.add('hidden');
+            document.getElementById('room-view').classList.add('hidden');
+            document.getElementById('solo-reveal-view').classList.add('hidden');
+
+            if (viewName === 'lobby') document.getElementById('lobby-view').classList.remove('hidden');
+            if (viewName === 'room') document.getElementById('room-view').classList.remove('hidden');
+            if (viewName === 'solo') document.getElementById('solo-reveal-view').classList.remove('hidden');
+        }
+
+        window.goToLobby = function() {
+            history.pushState(null, '', window.location.pathname + window.location.search);
+            handleRouteChange();
+        };
+
+        // ---------------------------------------------------------------------
+        // ROOM CREATION & SUBSCRIPTION
+        // ---------------------------------------------------------------------
+        function generateRoomSlug(title) {
+            const clean = title
+                .toLowerCase()
+                .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+                .replace(/[^a-z0-9]+/g, '-')
+                .replace(/^-+|-+$/g, '')
+                .slice(0, 16) || 'sala';
+            const rand = Math.floor(1000 + Math.random() * 9000);
+            return `${clean}-${rand}`;
+        }
+
+        window.handleCreateRoom = async function(e) {
+            e.preventDefault();
+            const title = document.getElementById('new-room-title').value.trim();
+            const budget = document.getElementById('new-room-budget').value.trim();
+            const date = document.getElementById('new-room-date').value.trim();
+            const adminPin = document.getElementById('new-room-pin').value.trim();
+
+            if (!title) return;
+
+            const roomId = generateRoomSlug(title);
+            const initialRoom = {
+                info: {
+                    title,
+                    budget,
+                    date,
+                    adminPin,
+                    isDrawn: false,
+                    createdAt: Date.now()
+                },
+                participantes: {},
+                sorteo: {}
+            };
+
+            if (isFirebaseReady && db) {
+                try {
+                    await set(ref(db, `salas/${roomId}`), initialRoom);
+                } catch (err) {
+                    console.error(err);
+                    showToast('Error al crear sala en Firebase. Revisa las reglas de tu base de datos.', 'error');
+                    return;
                 }
-            } catch (e) {
-                console.error('Error loading storage:', e);
+            } else {
+                saveLocalRoomFallback(roomId, initialRoom);
+            }
+
+            saveRecentRoom(roomId, title);
+            window.location.hash = `#sala=${roomId}`;
+            showToast(`¡Sala "${title}" creada!`);
+        };
+
+        window.handleJoinRoomByCode = function(e) {
+            e.preventDefault();
+            const code = document.getElementById('join-room-code-input').value.trim().toLowerCase();
+            if (!code) return;
+            window.location.hash = `#sala=${encodeURIComponent(code)}`;
+        };
+
+        function enterRoom(roomId) {
+            currentRoomId = roomId;
+            document.getElementById('header-room-pill').classList.remove('hidden');
+            document.getElementById('header-room-id').textContent = roomId;
+            showView('room');
+
+            if (isFirebaseReady && db) {
+                const roomRef = ref(db, `salas/${roomId}`);
+                unsubscribeRoom = onValue(roomRef, (snapshot) => {
+                    const val = snapshot.val();
+                    if (val) {
+                        roomData = {
+                            info: val.info || { title: `Sala ${roomId}`, budget: '', date: '', adminPin: '', isDrawn: false },
+                            participantes: val.participantes || {},
+                            sorteo: val.sorteo || {}
+                        };
+                        saveRecentRoom(roomId, roomData.info.title || roomId);
+                    } else {
+                        // Room doesn't exist yet -> initialize empty structure
+                        roomData = {
+                            info: { title: `Sala ${roomId}`, budget: '', date: '', adminPin: '', isDrawn: false },
+                            participantes: {},
+                            sorteo: {}
+                        };
+                    }
+                    renderRoomView();
+                }, (error) => {
+                    console.error("onValue error:", error);
+                    showToast('Error de lectura en Firebase. Verifica que las reglas estén en modo prueba.', 'error');
+                });
+            } else {
+                // Local fallback mode
+                roomData = getLocalRoomFallback(roomId);
+                renderRoomView();
             }
         }
 
         // ---------------------------------------------------------------------
-        // TOAST NOTIFICATIONS & CLIPBOARD HELPER
+        // LIVE PARTICIPANT REGISTRATION
         // ---------------------------------------------------------------------
+        window.handleAddParticipantLive = async function(e) {
+            e.preventDefault();
+            if (!currentRoomId) return;
+
+            const nameInput = document.getElementById('live-part-name');
+            const giftInput = document.getElementById('live-part-gift');
+            const pinInput = document.getElementById('live-part-pin');
+
+            const name = nameInput.value.trim();
+            const gift = giftInput.value.trim();
+            const pin = pinInput.value.trim();
+
+            if (!name) return;
+
+            // Check duplicate name in current room
+            const existingList = Object.values(roomData.participantes || {});
+            if (existingList.some(p => p.name.toLowerCase() === name.toLowerCase())) {
+                showToast(`Ya hay alguien llamado "${name}" en esta sala. Agrega tu apellido.`, 'error');
+                return;
+            }
+
+            const newParticipant = {
+                name,
+                gift,
+                pin,
+                createdAt: Date.now()
+            };
+
+            if (isFirebaseReady && db) {
+                try {
+                    // push() generates a unique chronological key so simultaneous writes NEVER collide
+                    const partListRef = ref(db, `salas/${currentRoomId}/participantes`);
+                    await push(partListRef, newParticipant);
+                } catch (err) {
+                    console.error(err);
+                    showToast('No se pudo guardar en Firebase. Revisa tu conexión o permisos.', 'error');
+                    return;
+                }
+            } else {
+                const fakeId = 'loc_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6);
+                roomData.participantes[fakeId] = newParticipant;
+                saveLocalRoomFallback(currentRoomId, roomData);
+                renderRoomView();
+            }
+
+            nameInput.value = '';
+            giftInput.value = '';
+            pinInput.value = '';
+            showToast(`¡${name} anotado en vivo!`);
+        };
+
+        window.deleteLiveParticipant = async function(partId, partName) {
+            if (!currentRoomId) return;
+            if (isFirebaseReady && db) {
+                try {
+                    await remove(ref(db, `salas/${currentRoomId}/participantes/${partId}`));
+                    showToast(`${partName} eliminado.`, 'info');
+                } catch (err) {
+                    showToast('Error al eliminar participante.', 'error');
+                }
+            } else {
+                delete roomData.participantes[partId];
+                saveLocalRoomFallback(currentRoomId, roomData);
+                renderRoomView();
+                showToast(`${partName} eliminado.`, 'info');
+            }
+        };
+
+        window.toggleWishesVisibility = function() {
+            hideWishes = !hideWishes;
+            renderRoomView();
+        };
+
+        // ---------------------------------------------------------------------
+        // DRAW & REOPEN LOGIC (WITH OPTIONAL ADMIN PIN)
+        // ---------------------------------------------------------------------
+        window.initiateDrawCheck = function() {
+            const entries = Object.entries(roomData.participantes || {});
+            if (entries.length < 3) {
+                showToast('Se necesitan al menos 3 participantes.', 'error');
+                return;
+            }
+
+            if (roomData.info.adminPin) {
+                pendingAdminAction = 'draw';
+                openAdminPinModal();
+            } else {
+                executeLiveDraw();
+            }
+        };
+
+        window.initiateReopenRegistration = function() {
+            if (roomData.info.adminPin) {
+                pendingAdminAction = 'reopen';
+                openAdminPinModal();
+            } else {
+                executeReopenRegistration();
+            }
+        };
+
+        function openAdminPinModal() {
+            document.getElementById('admin-pin-verify-input').value = '';
+            const modal = document.getElementById('admin-pin-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            document.getElementById('admin-pin-verify-input').focus();
+        }
+
+        window.closeAdminPinModal = function() {
+            const modal = document.getElementById('admin-pin-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            pendingAdminAction = null;
+        };
+
+        window.submitAdminPinVerification = function() {
+            const entered = document.getElementById('admin-pin-verify-input').value.trim();
+            if (entered !== String(roomData.info.adminPin)) {
+                showToast('Clave de organizador incorrecta.', 'error');
+                return;
+            }
+            const action = pendingAdminAction;
+            closeAdminPinModal();
+            if (action === 'draw') executeLiveDraw();
+            if (action === 'reopen') executeReopenRegistration();
+        };
+
+        async function executeLiveDraw() {
+            const entries = Object.entries(roomData.participantes || {});
+            if (entries.length < 3) return;
+
+            // Sattolo cyclic derangement
+            const shuffled = [...entries];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * i);
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+
+            const sorteoObj = {};
+            for (let i = 0; i < entries.length; i++) {
+                const [giverId] = entries[i];
+                const [targetId, targetData] = shuffled[i];
+                sorteoObj[giverId] = {
+                    targetId,
+                    targetName: targetData.name,
+                    targetWish: targetData.gift || '',
+                    revealed: false
+                };
+            }
+
+            if (isFirebaseReady && db) {
+                try {
+                    await update(ref(db, `salas/${currentRoomId}`), {
+                        sorteo: sorteoObj,
+                        'info/isDrawn': true
+                    });
+                } catch (err) {
+                    console.error(err);
+                    showToast('Error al guardar el sorteo en Firebase.', 'error');
+                    return;
+                }
+            } else {
+                roomData.sorteo = sorteoObj;
+                roomData.info.isDrawn = true;
+                saveLocalRoomFallback(currentRoomId, roomData);
+                renderRoomView();
+            }
+
+            if (typeof confetti === 'function') {
+                confetti({
+                    particleCount: 95,
+                    spread: 75,
+                    origin: { y: 0.6 },
+                    colors: ['#E11D48', '#059669', '#D97706', '#FBBF24']
+                });
+            }
+            showToast('¡Sorteo realizado! Cada uno ya puede ver su resultado.');
+        }
+
+        async function executeReopenRegistration() {
+            if (isFirebaseReady && db) {
+                try {
+                    await update(ref(db, `salas/${currentRoomId}`), {
+                        sorteo: {},
+                        'info/isDrawn': false
+                    });
+                    showToast('Lista reabierta para agregar o editar participantes.', 'info');
+                } catch (err) {
+                    showToast('Error al reabrir la lista.', 'error');
+                }
+            } else {
+                roomData.sorteo = {};
+                roomData.info.isDrawn = false;
+                saveLocalRoomFallback(currentRoomId, roomData);
+                renderRoomView();
+                showToast('Lista reabierta.', 'info');
+            }
+        }
+
+        // ---------------------------------------------------------------------
+        // SELF-REVEAL FLOW (ON THE LIVE ROOM PAGE)
+        // ---------------------------------------------------------------------
+        window.openSelfRevealModal = function(partId) {
+            const participant = roomData.participantes[partId];
+            const assignment = roomData.sorteo[partId];
+            if (!participant || !assignment) return;
+
+            activeRevealParticipantId = partId;
+            document.getElementById('self-confirm-name').textContent = participant.name;
+
+            const pinBox = document.getElementById('self-pin-box');
+            const descEl = document.getElementById('self-confirm-desc');
+            if (participant.pin && participant.pin.trim() !== '') {
+                pinBox.classList.remove('hidden');
+                document.getElementById('self-pin-input').value = '';
+                descEl.textContent = 'Este participante protegió su resultado con un PIN personal.';
+            } else {
+                pinBox.classList.add('hidden');
+                descEl.textContent = 'Asegúrate de que nadie más esté mirando tu pantalla antes de descubrir tu amigo secreto.';
+            }
+
+            document.getElementById('self-step-confirm').classList.remove('hidden');
+            document.getElementById('self-step-result').classList.add('hidden');
+
+            const modal = document.getElementById('self-reveal-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        };
+
+        window.closeSelfRevealModal = function() {
+            const modal = document.getElementById('self-reveal-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            activeRevealParticipantId = null;
+        };
+
+        window.verifyAndShowSelfSecret = async function() {
+            if (!activeRevealParticipantId) return;
+            const participant = roomData.participantes[activeRevealParticipantId];
+            const assignment = roomData.sorteo[activeRevealParticipantId];
+            if (!participant || !assignment) return;
+
+            if (participant.pin && participant.pin.trim() !== '') {
+                const entered = document.getElementById('self-pin-input').value.trim();
+                if (entered !== String(participant.pin).trim()) {
+                    showToast('PIN incorrecto. Intenta nuevamente.', 'error');
+                    return;
+                }
+            }
+
+            // Show result
+            document.getElementById('self-result-giver').textContent = participant.name;
+            document.getElementById('self-result-target').textContent = assignment.targetName;
+
+            const wishEl = document.getElementById('self-result-wish');
+            if (assignment.targetWish && assignment.targetWish.trim() !== '') {
+                wishEl.textContent = `"${assignment.targetWish}"`;
+                wishEl.classList.remove('italic', 'text-slate-500');
+            } else {
+                wishEl.textContent = 'No especificó preferencia (¡Sorpréndelo con tu creatividad!)';
+                wishEl.classList.add('italic', 'text-slate-500');
+            }
+
+            document.getElementById('self-step-confirm').classList.add('hidden');
+            document.getElementById('self-step-result').classList.remove('hidden');
+
+            if (typeof confetti === 'function') {
+                confetti({
+                    particleCount: 80,
+                    spread: 70,
+                    origin: { y: 0.6 },
+                    colors: ['#E11D48', '#059669', '#D97706']
+                });
+            }
+
+            // Mark as revealed in Firebase
+            if (!assignment.revealed) {
+                if (isFirebaseReady && db) {
+                    try {
+                        await update(ref(db, `salas/${currentRoomId}/sorteo/${activeRevealParticipantId}`), {
+                            revealed: true
+                        });
+                    } catch (e) {}
+                } else {
+                    roomData.sorteo[activeRevealParticipantId].revealed = true;
+                    saveLocalRoomFallback(currentRoomId, roomData);
+                    renderRoomView();
+                }
+            }
+        };
+
+        // ---------------------------------------------------------------------
+        // SHARING HELPERS (SINGLE ROOM LINK & INDIVIDUAL WHATSAPP LINK)
+        // ---------------------------------------------------------------------
+        window.copyRoomLink = function() {
+            const url = window.location.href.split('#')[0] + `#sala=${currentRoomId}`;
+            copyTextToClipboard(url, '¡Enlace de la sala copiado! Compártelo en el grupo.');
+        };
+
+        window.shareRoomOnWhatsApp = function() {
+            const url = window.location.href.split('#')[0] + `#sala=${currentRoomId}`;
+            const title = roomData.info.title ? `*${roomData.info.title}*` : '*Amigo Secreto*';
+            const msg = `🎄 ¡Juguemos al ${title}! 🎁\n\n` +
+                        `Entra a este enlace único, escribe tu nombre y pon tu opción de regalo (todos podemos entrar al mismo tiempo):\n${url}`;
+            window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank', 'noopener');
+        };
+
+        window.sendDirectWhatsAppResult = function(partId) {
+            const participant = roomData.participantes[partId];
+            const assignment = roomData.sorteo[partId];
+            if (!participant || !assignment) return;
+
+            const payload = {
+                g: participant.name,
+                r: assignment.targetName,
+                w: assignment.targetWish || '',
+                t: roomData.info.title || '',
+                b: roomData.info.budget || '',
+                d: roomData.info.date || ''
+            };
+            const url = window.location.href.split('#')[0] + '#r=' + encodePayload(payload);
+            const title = roomData.info.title ? `*${roomData.info.title}*` : '*Amigo Secreto*';
+            const msg = `🤫 ¡Hola *${participant.name}*! Ya se hizo el sorteo de ${title}.\n\n` +
+                        `🎁 Abre tu enlace secreto personal para ver a quién le regalas y qué pidió:\n${url}`;
+            window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank', 'noopener');
+        };
+
+        // ---------------------------------------------------------------------
+        // RENDERING ROOM VIEW
+        // ---------------------------------------------------------------------
+        function renderRoomView() {
+            const info = roomData.info || {};
+            document.getElementById('room-code-display').textContent = currentRoomId;
+            document.getElementById('room-title-display').textContent = info.title || `Sala ${currentRoomId}`;
+            document.getElementById('room-budget-display').innerHTML = `<i class="fa-solid fa-coins text-amber-300 mr-1"></i> Presupuesto: <strong>${escapeHTML(info.budget || 'Libre')}</strong>`;
+            document.getElementById('room-date-display').innerHTML = `<i class="fa-regular fa-calendar text-amber-300 mr-1"></i> ${escapeHTML(info.date || 'Fecha por confirmar')}`;
+
+            const statusPill = document.getElementById('room-status-pill');
+            const regSection = document.getElementById('room-registration-section');
+            const drawnSection = document.getElementById('room-drawn-section');
+
+            const entries = Object.entries(roomData.participantes || {}).sort((a, b) => (a[1].createdAt || 0) - (b[1].createdAt || 0));
+
+            if (info.isDrawn && entries.length >= 3) {
+                statusPill.textContent = 'Sorteo Realizado';
+                statusPill.className = 'inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-950/50 text-emerald-200 text-xs font-semibold';
+                regSection.classList.add('hidden');
+                drawnSection.classList.remove('hidden');
+                renderDrawnCards(entries);
+            } else {
+                statusPill.textContent = 'Inscripciones abiertas';
+                statusPill.className = 'inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-400/20 text-amber-200 text-xs font-semibold';
+                regSection.classList.remove('hidden');
+                drawnSection.classList.add('hidden');
+                renderLiveParticipants(entries);
+            }
+        }
+
+        function renderLiveParticipants(entries) {
+            const listEl = document.getElementById('live-participants-list');
+            const emptyEl = document.getElementById('live-empty-state');
+            const countBadge = document.getElementById('live-count-badge');
+            const btnDraw = document.getElementById('btn-live-draw');
+            const minWarn = document.getElementById('live-min-warning');
+
+            const iconToggle = document.getElementById('icon-toggle-wishes');
+            const textToggle = document.getElementById('text-toggle-wishes');
+            if (hideWishes) {
+                iconToggle.className = 'fa-regular fa-eye';
+                textToggle.textContent = 'Mostrar deseos';
+            } else {
+                iconToggle.className = 'fa-regular fa-eye-slash';
+                textToggle.textContent = 'Ocultar deseos';
+            }
+
+            countBadge.textContent = entries.length;
+
+            if (entries.length === 0) {
+                emptyEl.classList.remove('hidden');
+                listEl.classList.add('hidden');
+            } else {
+                emptyEl.classList.add('hidden');
+                listEl.classList.remove('hidden');
+            }
+
+            if (entries.length >= 3) {
+                btnDraw.disabled = false;
+                minWarn.classList.add('hidden');
+            } else {
+                btnDraw.disabled = true;
+                minWarn.classList.remove('hidden');
+            }
+
+            const avatarColors = [
+                'bg-rose-100 text-rose-700',
+                'bg-emerald-100 text-emerald-700',
+                'bg-amber-100 text-amber-700',
+                'bg-sky-100 text-sky-700',
+                'bg-purple-100 text-purple-700'
+            ];
+
+            listEl.innerHTML = entries.map(([id, p], idx) => {
+                const initial = (p.name || '?').charAt(0).toUpperCase();
+                const colorClass = avatarColors[idx % avatarColors.length];
+                const hasPin = p.pin && p.pin.trim() !== '';
+
+                let giftHtml = '';
+                if (hideWishes) {
+                    giftHtml = `<span class="text-xs text-slate-400 italic flex items-center gap-1 mt-0.5"><i class="fa-solid fa-lock text-[10px]"></i> Deseo oculto</span>`;
+                } else if (p.gift) {
+                    giftHtml = `<p class="text-xs text-slate-600 mt-0.5 flex items-start gap-1.5"><i class="fa-solid fa-gift text-rose-400 mt-0.5 shrink-0"></i> <span>${escapeHTML(p.gift)}</span></p>`;
+                } else {
+                    giftHtml = `<p class="text-xs text-slate-400 italic mt-0.5">Sin preferencia registrada</p>`;
+                }
+
+                return `
+                    <li class="p-3.5 rounded-xl border border-slate-200/80 bg-slate-50/60 hover:bg-white transition flex items-start justify-between gap-3 animate-pop">
+                        <div class="flex items-start gap-3 min-w-0">
+                            <div class="w-9 h-9 rounded-xl ${colorClass} font-display font-bold text-sm flex items-center justify-center shrink-0 mt-0.5">
+                                ${escapeHTML(initial)}
+                            </div>
+                            <div class="min-w-0">
+                                <div class="flex items-center gap-1.5">
+                                    <h4 class="font-bold text-slate-800 text-sm truncate">${escapeHTML(p.name)}</h4>
+                                    ${hasPin ? '<span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-200/70 text-slate-600 font-semibold" title="Protegido con PIN"><i class="fa-solid fa-key text-[9px]"></i> PIN</span>' : ''}
+                                </div>
+                                ${giftHtml}
+                            </div>
+                        </div>
+                        <button type="button" onclick="deleteLiveParticipant('${id}', '${escapeHTML(p.name).replace(/'/g, "\\'")}')"
+                            class="w-8 h-8 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition flex items-center justify-center shrink-0" title="Eliminar">
+                            <i class="fa-solid fa-trash-can text-xs"></i>
+                        </button>
+                    </li>
+                `;
+            }).join('');
+        }
+
+        function renderDrawnCards(entries) {
+            const container = document.getElementById('live-reveal-cards');
+            const progressEl = document.getElementById('live-revealed-progress');
+
+            let revealedCount = 0;
+            entries.forEach(([id]) => {
+                if (roomData.sorteo[id]?.revealed) revealedCount++;
+            });
+            progressEl.textContent = `${revealedCount} de ${entries.length} descubiertos`;
+
+            container.innerHTML = entries.map(([id, p]) => {
+                const assignment = roomData.sorteo[id];
+                const isRevealed = assignment?.revealed;
+                const hasPin = p.pin && p.pin.trim() !== '';
+
+                return `
+                    <div class="p-4 sm:p-5 rounded-2xl bg-white border ${isRevealed ? 'border-emerald-200 bg-emerald-50/20' : 'border-slate-200'} shadow-sm flex flex-col justify-between gap-3.5">
+                        <div class="flex items-center justify-between gap-2">
+                            <div class="flex items-center gap-3 min-w-0">
+                                <div class="w-10 h-10 rounded-xl ${isRevealed ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'} font-display font-bold text-base flex items-center justify-center shrink-0">
+                                    ${isRevealed ? '<i class="fa-solid fa-check"></i>' : escapeHTML(p.name.charAt(0).toUpperCase())}
+                                </div>
+                                <div class="min-w-0">
+                                    <h4 class="font-display font-bold text-slate-800 text-base truncate">${escapeHTML(p.name)}</h4>
+                                    <span class="text-xs ${isRevealed ? 'text-emerald-700 font-medium' : 'text-slate-400'}">
+                                        ${isRevealed ? 'Ya descubrió su amigo secreto' : (hasPin ? 'Protegido con PIN' : 'Pendiente por abrir')}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-2">
+                            <button type="button" onclick="openSelfRevealModal('${id}')"
+                                class="flex-1 py-2.5 px-3.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs sm:text-sm shadow-sm transition flex items-center justify-center gap-1.5">
+                                <i class="fa-solid fa-gift"></i>
+                                <span>Ver mi Amigo Secreto</span>
+                            </button>
+                            <button type="button" onclick="sendDirectWhatsAppResult('${id}')"
+                                class="py-2.5 px-3 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 font-semibold text-xs transition flex items-center justify-center" title="Enviar enlace directo por WhatsApp">
+                                <i class="fa-brands fa-whatsapp text-base"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // ---------------------------------------------------------------------
+        // SOLO REVEAL VIEW (#r=...)
+        // ---------------------------------------------------------------------
+        function renderSoloRevealView() {
+            if (!soloRevealData) return;
+            document.getElementById('solo-giver-name').textContent = soloRevealData.g;
+            document.getElementById('solo-event-title').textContent = soloRevealData.t || 'Amigo Secreto';
+            document.getElementById('solo-locked-box').classList.remove('hidden');
+            document.getElementById('solo-unlocked-box').classList.add('hidden');
+        }
+
+        window.revealSoloSecret = function() {
+            if (!soloRevealData) return;
+            document.getElementById('solo-receiver-name').textContent = soloRevealData.r;
+            const giftEl = document.getElementById('solo-receiver-gift');
+            if (soloRevealData.w && soloRevealData.w.trim() !== '') {
+                giftEl.textContent = `"${soloRevealData.w}"`;
+                giftEl.classList.remove('italic', 'text-slate-500');
+            } else {
+                giftEl.textContent = 'No especificó preferencia (¡Sorpréndelo con tu creatividad!)';
+                giftEl.classList.add('italic', 'text-slate-500');
+            }
+
+            const details = [];
+            if (soloRevealData.t) details.push(`<div><i class="fa-solid fa-champagne-glasses text-rose-500 w-5"></i> <strong>Grupo:</strong> ${escapeHTML(soloRevealData.t)}</div>`);
+            if (soloRevealData.b) details.push(`<div><i class="fa-solid fa-coins text-amber-500 w-5"></i> <strong>Presupuesto:</strong> ${escapeHTML(soloRevealData.b)}</div>`);
+            if (soloRevealData.d) details.push(`<div><i class="fa-regular fa-calendar text-emerald-600 w-5"></i> <strong>Detalles:</strong> ${escapeHTML(soloRevealData.d)}</div>`);
+
+            const detailsEl = document.getElementById('solo-event-details');
+            detailsEl.innerHTML = details.join('');
+            detailsEl.classList.toggle('hidden', details.length === 0);
+
+            document.getElementById('solo-locked-box').classList.add('hidden');
+            document.getElementById('solo-unlocked-box').classList.remove('hidden');
+
+            if (typeof confetti === 'function') {
+                confetti({ particleCount: 90, spread: 75, origin: { y: 0.55 } });
+            }
+        };
+
+        window.hideSoloSecret = function() {
+            document.getElementById('solo-unlocked-box').classList.add('hidden');
+            document.getElementById('solo-locked-box').classList.remove('hidden');
+        };
+
+        // ---------------------------------------------------------------------
+        // FIREBASE CONFIG MODAL (UI PARSER)
+        // ---------------------------------------------------------------------
+        window.openFirebaseSetupModal = function() {
+            const modal = document.getElementById('firebase-modal');
+            const cfg = getActiveFirebaseConfig();
+            if (cfg && cfg.databaseURL && !cfg.databaseURL.includes('PEGA_AQUI')) {
+                document.getElementById('firebase-json-input').value = JSON.stringify(cfg, null, 2);
+            }
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        };
+
+        window.closeFirebaseSetupModal = function() {
+            const modal = document.getElementById('firebase-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        };
+
+        window.saveFirebaseConfigFromUI = function() {
+            const raw = document.getElementById('firebase-json-input').value.trim();
+            if (!raw) {
+                showToast('Pega el objeto de configuración de Firebase.', 'error');
+                return;
+            }
+            try {
+                // Allow pasting either strict JSON or JS object literal from Firebase console
+                const jsonNormalized = raw
+                    .replace(/^[^{]*\{/, '{')
+                    .replace(/\}[^}]*$/, '}')
+                    .replace(/(['"])?([a-zA-Z0-9_]+)(['"])?\s*:/g, '"$2":')
+                    .replace(/'/g, '"')
+                    .replace(/,\s*}/g, '}');
+
+                const parsed = JSON.parse(jsonNormalized);
+                if (!parsed.databaseURL || !parsed.databaseURL.startsWith('http')) {
+                    showToast('El objeto debe incluir "databaseURL" comenzando con https://', 'error');
+                    return;
+                }
+                localStorage.setItem(LS_CONFIG_KEY, JSON.stringify(parsed));
+                closeFirebaseSetupModal();
+                showToast('¡Credenciales guardadas! Recargando conexión...');
+                setTimeout(() => window.location.reload(), 700);
+            } catch (e) {
+                showToast('No se pudo leer el formato. Copia desde { hasta } en Firebase.', 'error');
+            }
+        };
+
+        window.clearCustomFirebaseConfig = function() {
+            localStorage.removeItem(LS_CONFIG_KEY);
+            showToast('Configuración local borrada. Recargando...', 'info');
+            setTimeout(() => window.location.reload(), 600);
+        };
+
+        // ---------------------------------------------------------------------
+        // RECENT ROOMS & LOCAL STORAGE FALLBACK
+        // ---------------------------------------------------------------------
+        function saveRecentRoom(roomId, title) {
+            try {
+                const list = JSON.parse(localStorage.getItem(LS_RECENT_ROOMS_KEY) || '[]');
+                const filtered = list.filter(item => item.id !== roomId);
+                filtered.unshift({ id: roomId, title: title || roomId, updatedAt: Date.now() });
+                localStorage.setItem(LS_RECENT_ROOMS_KEY, JSON.stringify(filtered.slice(0, 6)));
+            } catch (e) {}
+        }
+
+        function renderRecentRooms() {
+            const box = document.getElementById('recent-rooms-box');
+            const listEl = document.getElementById('recent-rooms-list');
+            try {
+                const list = JSON.parse(localStorage.getItem(LS_RECENT_ROOMS_KEY) || '[]');
+                if (list.length === 0) {
+                    box.classList.add('hidden');
+                    return;
+                }
+                box.classList.remove('hidden');
+                listEl.innerHTML = list.map(item => `
+                    <li>
+                        <a href="#sala=${encodeURIComponent(item.id)}"
+                           class="p-3 rounded-xl border border-slate-200/80 hover:border-rose-300 hover:bg-rose-50/40 transition flex items-center justify-between gap-2">
+                            <div class="min-w-0">
+                                <div class="font-bold text-slate-800 text-sm truncate">${escapeHTML(item.title)}</div>
+                                <div class="text-xs font-mono text-slate-400">${escapeHTML(item.id)}</div>
+                            </div>
+                            <i class="fa-solid fa-chevron-right text-slate-400 text-xs"></i>
+                        </a>
+                    </li>
+                `).join('');
+            } catch (e) {
+                box.classList.add('hidden');
+            }
+        }
+
+        function getLocalRoomFallback(roomId) {
+            try {
+                const all = JSON.parse(localStorage.getItem(LS_LOCAL_FALLBACK_KEY) || '{}');
+                return all[roomId] || { info: { title: `Sala ${roomId}`, budget: '', date: '', adminPin: '', isDrawn: false }, participantes: {}, sorteo: {} };
+            } catch (e) {
+                return { info: { title: `Sala ${roomId}`, budget: '', date: '', adminPin: '', isDrawn: false }, participantes: {}, sorteo: {} };
+            }
+        }
+
+        function saveLocalRoomFallback(roomId, data) {
+            try {
+                const all = JSON.parse(localStorage.getItem(LS_LOCAL_FALLBACK_KEY) || '{}');
+                all[roomId] = data;
+                localStorage.setItem(LS_LOCAL_FALLBACK_KEY, JSON.stringify(all));
+            } catch (e) {}
+        }
+
+        // ---------------------------------------------------------------------
+        // UTILITIES (BASE64, TOAST, CLIPBOARD, ESCAPE)
+        // ---------------------------------------------------------------------
+        function encodePayload(obj) {
+            try {
+                const utf8Bytes = new TextEncoder().encode(JSON.stringify(obj));
+                let binary = '';
+                for (let i = 0; i < utf8Bytes.length; i++) binary += String.fromCharCode(utf8Bytes[i]);
+                return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+            } catch (e) { return ''; }
+        }
+
+        function decodePayload(encodedStr) {
+            try {
+                let base64 = encodedStr.replace(/-/g, '+').replace(/_/g, '/');
+                while (base64.length % 4) base64 += '=';
+                const binary = atob(base64);
+                const bytes = new Uint8Array(binary.length);
+                for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+                return JSON.parse(new TextDecoder().decode(bytes));
+            } catch (e) { return null; }
+        }
+
         function showToast(message, type = 'success') {
             const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
-            
             const styles = {
                 success: 'bg-slate-900 text-white border-slate-700',
                 error: 'bg-rose-600 text-white border-rose-500',
                 info: 'bg-emerald-700 text-white border-emerald-600'
             };
-
             const icons = {
                 success: '<i class="fa-solid fa-circle-check text-emerald-400"></i>',
                 error: '<i class="fa-solid fa-circle-exclamation text-rose-200"></i>',
                 info: '<i class="fa-solid fa-sparkles text-amber-300"></i>'
             };
-
             toast.className = `flex items-center gap-2.5 px-4 py-3 rounded-xl shadow-lg border text-xs sm:text-sm font-medium transition-all duration-300 transform translate-y-2 opacity-0 ${styles[type] || styles.success}`;
             toast.innerHTML = `${icons[type] || icons.success} <span>${escapeHTML(message)}</span>`;
-            
             container.appendChild(toast);
             requestAnimationFrame(() => toast.classList.remove('translate-y-2', 'opacity-0'));
-
             setTimeout(() => {
                 toast.classList.add('opacity-0', 'translate-y-2');
                 setTimeout(() => toast.remove(), 300);
@@ -898,595 +1631,9 @@
             document.body.removeChild(temp);
         }
 
-        // ---------------------------------------------------------------------
-        // GROUP LINK SHARING ACTIONS
-        // ---------------------------------------------------------------------
-        function copyGroupLink() {
-            const url = buildGroupShareURL();
-            copyTextToClipboard(url, '¡Enlace del grupo copiado! Pégalo en WhatsApp.');
-        }
-
-        function shareGroupOnWhatsApp(justJoined = false) {
-            const url = buildGroupShareURL();
-            const title = state.eventTitle ? `*${state.eventTitle}*` : '*Amigo Secreto*';
-            const count = state.participants.length;
-            
-            let text = '';
-            if (justJoined) {
-                text = `🎁 ¡Ya me anoté en ${title} con mi opción de regalo! (${count} anotados hasta ahora).\n\n` +
-                       `👇 Entra a este enlace actualizado para anotarte tú también o hacer el sorteo:\n${url}`;
-            } else {
-                text = `🎄 ¡Juguemos al ${title}! 🎁\n\n` +
-                       `Entra a este enlace, escribe tu nombre y pon tu opción de regalo (luego reenvía el enlace actualizado al grupo):\n${url}`;
-            }
-
-            window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank', 'noopener');
-        }
-
-        // ---------------------------------------------------------------------
-        // EVENT SETTINGS & PARTICIPANT CRUD
-        // ---------------------------------------------------------------------
-        function saveEventSettings() {
-            state.eventTitle = document.getElementById('event-title').value.trim();
-            state.eventBudget = document.getElementById('event-budget').value.trim();
-            state.eventDate = document.getElementById('event-date').value.trim();
-            syncStateToUrlAndStorage();
-        }
-
-        function handleParticipantSubmit(e) {
-            e.preventDefault();
-            const nameInput = document.getElementById('participant-name');
-            const giftInput = document.getElementById('participant-gift');
-            const editIdInput = document.getElementById('edit-id');
-
-            const name = nameInput.value.trim();
-            const gift = giftInput.value.trim();
-            const editId = editIdInput.value;
-
-            if (!name) {
-                showToast('Ingresa un nombre válido.', 'error');
-                return;
-            }
-
-            const duplicate = state.participants.find(
-                p => p.name.toLowerCase() === name.toLowerCase() && p.id !== editId
-            );
-            if (duplicate) {
-                showToast(`Ya hay alguien llamado "${name}". Agrega tu apellido o apodo.`, 'error');
-                return;
-            }
-
-            if (editId) {
-                const idx = state.participants.findIndex(p => p.id === editId);
-                if (idx !== -1) {
-                    state.participants[idx].name = name;
-                    state.participants[idx].gift = gift;
-                    showToast(`Datos de ${name} actualizados.`);
-                }
-                cancelEdit();
-            } else {
-                state.participants.push({
-                    id: 'p_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
-                    name: name,
-                    gift: gift
-                });
-                nameInput.value = '';
-                giftInput.value = '';
-                document.getElementById('post-add-share-box').classList.remove('hidden');
-                showToast(`¡${name} agregado! Enlace actualizado.`);
-            }
-
-            syncStateToUrlAndStorage();
-            renderParticipantsList();
-        }
-
-        function startEditParticipant(id) {
-            const p = state.participants.find(item => item.id === id);
-            if (!p) return;
-
-            document.getElementById('edit-id').value = p.id;
-            document.getElementById('participant-name').value = p.name;
-            document.getElementById('participant-gift').value = p.gift;
-            document.getElementById('post-add-share-box').classList.add('hidden');
-
-            document.getElementById('form-heading').innerHTML = `
-                <span class="w-8 h-8 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center text-sm">
-                    <i class="fa-solid fa-pen"></i>
-                </span>
-                Editar Participante
-            `;
-            document.getElementById('btn-submit-participant').innerHTML = `
-                <i class="fa-solid fa-check"></i>
-                <span>Guardar Cambios</span>
-            `;
-            document.getElementById('btn-cancel-edit').classList.remove('hidden');
-            document.getElementById('participant-name').focus();
-        }
-
-        function cancelEdit() {
-            document.getElementById('edit-id').value = '';
-            document.getElementById('participant-name').value = '';
-            document.getElementById('participant-gift').value = '';
-
-            document.getElementById('form-heading').innerHTML = `
-                <span class="w-8 h-8 rounded-lg bg-rose-100 text-rose-600 flex items-center justify-center text-sm">
-                    <i class="fa-solid fa-user-plus"></i>
-                </span>
-                Anotarme / Agregar Participante
-            `;
-            document.getElementById('btn-submit-participant').innerHTML = `
-                <i class="fa-solid fa-plus"></i>
-                <span>Guardar en la lista</span>
-            `;
-            document.getElementById('btn-cancel-edit').classList.add('hidden');
-        }
-
-        function deleteParticipant(id) {
-            const p = state.participants.find(item => item.id === id);
-            state.participants = state.participants.filter(item => item.id !== id);
-            if (document.getElementById('edit-id').value === id) cancelEdit();
-            syncStateToUrlAndStorage();
-            renderParticipantsList();
-            if (p) showToast(`${p.name} eliminado.`, 'info');
-        }
-
-        function toggleWishesVisibility() {
-            state.hideWishesInSetup = !state.hideWishesInSetup;
-            renderParticipantsList();
-        }
-
-        function loadSampleData() {
-            state.eventTitle = state.eventTitle || 'Amigo Secreto Oficina 2026';
-            state.eventBudget = state.eventBudget || '$15.000 CLP';
-            state.eventDate = state.eventDate || '23 de Diciembre - 19:00 hrs';
-            state.participants = [
-                { id: 'p_s1', name: 'Sofía Martínez', gift: 'Novela de misterio, velas aromáticas o té verde en hojas.' },
-                { id: 'p_s2', name: 'Diego Herrera', gift: 'Calcetines divertidos, café de grano molido o taza térmica.' },
-                { id: 'p_s3', name: 'Valentina Rojas', gift: 'Chocolates amargos 70%, libreta bonita o planta suculenta.' },
-                { id: 'p_s4', name: 'Mateo Silva', gift: 'Botella deportiva reutilizable o juego de mesa portátil.' }
-            ];
-            state.isDrawn = false;
-            state.assignments = {};
-            state.sentIds = [];
-            syncStateToUrlAndStorage();
-            renderApp();
-            showToast('Grupo de ejemplo cargado (4 participantes).', 'info');
-        }
-
-        // ---------------------------------------------------------------------
-        // SECRET SANTA DERANGEMENT DRAW
-        // ---------------------------------------------------------------------
-        function generateDerangement(ids) {
-            // Sattolo's algorithm guarantees a single cyclic permutation (nobody gets themselves)
-            const shuffled = [...ids];
-            for (let i = shuffled.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * i);
-                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-            }
-            const map = {};
-            for (let i = 0; i < ids.length; i++) {
-                map[ids[i]] = shuffled[i];
-            }
-            return map;
-        }
-
-        function performDraw(isRedraw = false) {
-            if (state.participants.length < 3) {
-                showToast('Se necesitan al menos 3 participantes.', 'error');
-                return;
-            }
-
-            const ids = state.participants.map(p => p.id);
-            state.assignments = generateDerangement(ids);
-            state.sentIds = [];
-            state.isDrawn = true;
-
-            try {
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-            } catch (e) {}
-
-            renderApp();
-
-            if (typeof confetti === 'function') {
-                confetti({
-                    particleCount: 85,
-                    spread: 70,
-                    origin: { y: 0.6 },
-                    colors: ['#E11D48', '#059669', '#D97706', '#FBBF24']
-                });
-            }
-
-            showToast(isRedraw ? '¡Nuevo sorteo generado! Envía los nuevos enlaces.' : '¡Sorteo realizado! Ya puedes enviar cada enlace secreto.');
-        }
-
-        function backToEdit() {
-            state.isDrawn = false;
-            syncStateToUrlAndStorage();
-            renderApp();
-        }
-
-        // ---------------------------------------------------------------------
-        // ORGANIZER ACTIONS: SHARE PERSONAL SECRET LINKS
-        // ---------------------------------------------------------------------
-        function markAsSent(giverId) {
-            if (!state.sentIds.includes(giverId)) {
-                state.sentIds.push(giverId);
-                try {
-                    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-                } catch (e) {}
-                renderResultsView();
-            }
-        }
-
-        function copyPersonalSecretLink(giverId) {
-            const giver = state.participants.find(p => p.id === giverId);
-            if (!giver) return;
-            const secretUrl = buildPersonalRevealURL(giverId);
-            copyTextToClipboard(secretUrl, `¡Enlace secreto de ${giver.name} copiado!`);
-            markAsSent(giverId);
-        }
-
-        function sendPersonalWhatsApp(giverId) {
-            const giver = state.participants.find(p => p.id === giverId);
-            if (!giver) return;
-            const secretUrl = buildPersonalRevealURL(giverId);
-            const title = state.eventTitle ? `*${state.eventTitle}*` : '*Amigo Secreto*';
-
-            const msg = `🤫 ¡Hola *${giver.name}*! Ya se hizo el sorteo de ${title}.\n\n` +
-                        `🎁 Abre tu enlace secreto personal para descubrir a quién te toca regalar y ver qué regalo pidió (solo tú puedes verlo):\n${secretUrl}`;
-
-            markAsSent(giverId);
-            window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank', 'noopener');
-        }
-
-        // Local In-Person Modal Reveal
-        function openLocalRevealModal(giverId) {
-            const giver = state.participants.find(p => p.id === giverId);
-            if (!giver) return;
-            activeModalGiverId = giverId;
-
-            document.getElementById('confirm-giver-name').textContent = giver.name;
-            document.getElementById('reveal-step-confirm').classList.remove('hidden');
-            document.getElementById('reveal-step-secret').classList.add('hidden');
-
-            const modal = document.getElementById('reveal-modal');
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-        }
-
-        function closeRevealModal() {
-            const modal = document.getElementById('reveal-modal');
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
-            activeModalGiverId = null;
-        }
-
-        function confirmAndShowSecret() {
-            if (!activeModalGiverId) return;
-            const giver = state.participants.find(p => p.id === activeModalGiverId);
-            const receiver = state.participants.find(p => p.id === state.assignments[activeModalGiverId]);
-            if (!giver || !receiver) return;
-
-            document.getElementById('secret-giver-name').textContent = giver.name;
-            document.getElementById('secret-receiver-name').textContent = receiver.name;
-
-            const giftEl = document.getElementById('secret-receiver-gift');
-            if (receiver.gift && receiver.gift.trim() !== '') {
-                giftEl.textContent = `"${receiver.gift}"`;
-                giftEl.classList.remove('italic', 'text-slate-500');
-            } else {
-                giftEl.textContent = 'No especificó preferencia (¡Sorpréndelo con tu creatividad!)';
-                giftEl.classList.add('italic', 'text-slate-500');
-            }
-
-            document.getElementById('reveal-step-confirm').classList.add('hidden');
-            document.getElementById('reveal-step-secret').classList.remove('hidden');
-        }
-
-        function markDoneAndCloseModal() {
-            if (activeModalGiverId) markAsSent(activeModalGiverId);
-            closeRevealModal();
-        }
-
-        // ---------------------------------------------------------------------
-        // SOLO SECRET REVEAL VIEW (#r=...)
-        // ---------------------------------------------------------------------
-        function revealSoloSecret() {
-            if (!soloRevealData) return;
-
-            document.getElementById('solo-receiver-name').textContent = soloRevealData.r;
-            const giftEl = document.getElementById('solo-receiver-gift');
-            if (soloRevealData.w && soloRevealData.w.trim() !== '') {
-                giftEl.textContent = `"${soloRevealData.w}"`;
-                giftEl.classList.remove('italic', 'text-slate-500');
-            } else {
-                giftEl.textContent = 'No especificó preferencia (¡Sorpréndelo con tu creatividad!)';
-                giftEl.classList.add('italic', 'text-slate-500');
-            }
-
-            const details = [];
-            if (soloRevealData.t) details.push(`<div><i class="fa-solid fa-champagne-glasses text-rose-500 w-5"></i> <strong>Grupo:</strong> ${escapeHTML(soloRevealData.t)}</div>`);
-            if (soloRevealData.b) details.push(`<div><i class="fa-solid fa-coins text-amber-500 w-5"></i> <strong>Presupuesto:</strong> ${escapeHTML(soloRevealData.b)}</div>`);
-            if (soloRevealData.d) details.push(`<div><i class="fa-regular fa-calendar text-emerald-600 w-5"></i> <strong>Detalles:</strong> ${escapeHTML(soloRevealData.d)}</div>`);
-
-            const detailsContainer = document.getElementById('solo-event-details');
-            if (details.length > 0) {
-                detailsContainer.innerHTML = details.join('');
-                detailsContainer.classList.remove('hidden');
-            } else {
-                detailsContainer.classList.add('hidden');
-            }
-
-            document.getElementById('solo-locked-box').classList.add('hidden');
-            document.getElementById('solo-unlocked-box').classList.remove('hidden');
-
-            if (typeof confetti === 'function') {
-                confetti({
-                    particleCount: 95,
-                    spread: 75,
-                    origin: { y: 0.55 },
-                    colors: ['#E11D48', '#059669', '#D97706', '#FBBF24']
-                });
-            }
-        }
-
-        function hideSoloSecret() {
-            document.getElementById('solo-unlocked-box').classList.add('hidden');
-            document.getElementById('solo-locked-box').classList.remove('hidden');
-        }
-
-        function exitSoloViewToNewGroup() {
-            soloRevealData = null;
-            state = {
-                eventTitle: '',
-                eventBudget: '',
-                eventDate: '',
-                participants: [],
-                assignments: {},
-                sentIds: [],
-                isDrawn: false,
-                hideWishesInSetup: false
-            };
-            history.replaceState(null, '', window.location.pathname + window.location.search);
-            renderApp();
-        }
-
-        // ---------------------------------------------------------------------
-        // MODALS (HELP & RESET)
-        // ---------------------------------------------------------------------
-        function openHelpModal() {
-            const modal = document.getElementById('help-modal');
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-        }
-
-        function closeHelpModal() {
-            const modal = document.getElementById('help-modal');
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
-        }
-
-        function openConfirmResetModal() {
-            const modal = document.getElementById('reset-modal');
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-        }
-
-        function closeConfirmResetModal() {
-            const modal = document.getElementById('reset-modal');
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
-        }
-
-        function executeFullReset() {
-            soloRevealData = null;
-            state = {
-                eventTitle: '',
-                eventBudget: '',
-                eventDate: '',
-                participants: [],
-                assignments: {},
-                sentIds: [],
-                isDrawn: false,
-                hideWishesInSetup: false
-            };
-            localStorage.removeItem(STORAGE_KEY);
-            cancelEdit();
-            document.getElementById('post-add-share-box').classList.add('hidden');
-            closeConfirmResetModal();
-            syncStateToUrlAndStorage();
-            renderApp();
-            showToast('Lista limpia. ¡Listo para un nuevo grupo!', 'info');
-        }
-
-        // ---------------------------------------------------------------------
-        // MAIN RENDER ROUTER
-        // ---------------------------------------------------------------------
-        function renderApp() {
-            const setupView = document.getElementById('setup-view');
-            const resultsView = document.getElementById('results-view');
-            const soloView = document.getElementById('single-reveal-view');
-
-            setupView.classList.add('hidden');
-            resultsView.classList.add('hidden');
-            soloView.classList.add('hidden');
-
-            // 1. Solo Reveal Mode (#r=...)
-            if (soloRevealData) {
-                soloView.classList.remove('hidden');
-                document.getElementById('solo-giver-name').textContent = soloRevealData.g;
-                document.getElementById('solo-event-title').textContent = soloRevealData.t || 'Intercambio de Amigo Secreto';
-                document.getElementById('solo-locked-box').classList.remove('hidden');
-                document.getElementById('solo-unlocked-box').classList.add('hidden');
-                return;
-            }
-
-            // Sync Setup Inputs
-            document.getElementById('event-title').value = state.eventTitle || '';
-            document.getElementById('event-budget').value = state.eventBudget || '';
-            document.getElementById('event-date').value = state.eventDate || '';
-
-            // 2. Organizer Results Mode
-            if (state.isDrawn && state.participants.length >= 3) {
-                resultsView.classList.remove('hidden');
-                renderResultsView();
-                return;
-            }
-
-            // 3. Group Registration Mode (#g=...)
-            state.isDrawn = false;
-            setupView.classList.remove('hidden');
-            renderParticipantsList();
-        }
-
-        function renderParticipantsList() {
-            const listEl = document.getElementById('participants-list');
-            const emptyEl = document.getElementById('empty-participants');
-            const countBadge = document.getElementById('participant-count-badge');
-            const btnDraw = document.getElementById('btn-start-draw');
-            const minWarning = document.getElementById('min-warning');
-
-            const iconToggle = document.getElementById('icon-toggle-wishes');
-            const textToggle = document.getElementById('text-toggle-wishes');
-            if (state.hideWishesInSetup) {
-                iconToggle.className = 'fa-regular fa-eye';
-                textToggle.textContent = 'Mostrar deseos';
-            } else {
-                iconToggle.className = 'fa-regular fa-eye-slash';
-                textToggle.textContent = 'Ocultar deseos';
-            }
-
-            const count = state.participants.length;
-            countBadge.textContent = count;
-
-            if (count === 0) {
-                emptyEl.classList.remove('hidden');
-                listEl.classList.add('hidden');
-            } else {
-                emptyEl.classList.add('hidden');
-                listEl.classList.remove('hidden');
-            }
-
-            if (count >= 3) {
-                btnDraw.disabled = false;
-                minWarning.classList.add('hidden');
-            } else {
-                btnDraw.disabled = true;
-                minWarning.classList.remove('hidden');
-            }
-
-            listEl.innerHTML = state.participants.map((p, idx) => {
-                const initial = p.name.charAt(0).toUpperCase();
-                const avatarColors = [
-                    'bg-rose-100 text-rose-700',
-                    'bg-emerald-100 text-emerald-700',
-                    'bg-amber-100 text-amber-700',
-                    'bg-sky-100 text-sky-700',
-                    'bg-purple-100 text-purple-700'
-                ];
-                const colorClass = avatarColors[idx % avatarColors.length];
-
-                let giftDisplay = '';
-                if (state.hideWishesInSetup) {
-                    giftDisplay = `<span class="text-xs text-slate-400 italic flex items-center gap-1 mt-0.5"><i class="fa-solid fa-lock text-[10px]"></i> Deseo oculto</span>`;
-                } else if (p.gift) {
-                    giftDisplay = `<p class="text-xs text-slate-600 mt-0.5 flex items-start gap-1.5"><i class="fa-solid fa-gift text-rose-400 mt-0.5 shrink-0"></i> <span>${escapeHTML(p.gift)}</span></p>`;
-                } else {
-                    giftDisplay = `<p class="text-xs text-slate-400 italic mt-0.5">Sin preferencia registrada</p>`;
-                }
-
-                return `
-                    <li class="p-3.5 rounded-xl border border-slate-200/80 bg-slate-50/50 hover:bg-white hover:shadow-sm transition flex items-start justify-between gap-3">
-                        <div class="flex items-start gap-3 min-w-0">
-                            <div class="w-9 h-9 rounded-xl ${colorClass} font-display font-bold text-sm flex items-center justify-center shrink-0 mt-0.5">
-                                ${escapeHTML(initial)}
-                            </div>
-                            <div class="min-w-0">
-                                <h4 class="font-bold text-slate-800 text-sm truncate">${escapeHTML(p.name)}</h4>
-                                ${giftDisplay}
-                            </div>
-                        </div>
-                        <div class="flex items-center gap-1 shrink-0">
-                            <button type="button" onclick="startEditParticipant('${p.id}')" 
-                                class="w-8 h-8 rounded-lg text-slate-400 hover:text-amber-600 hover:bg-amber-50 transition flex items-center justify-center" title="Editar">
-                                <i class="fa-solid fa-pen text-xs"></i>
-                            </button>
-                            <button type="button" onclick="deleteParticipant('${p.id}')" 
-                                class="w-8 h-8 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition flex items-center justify-center" title="Eliminar">
-                                <i class="fa-solid fa-trash-can text-xs"></i>
-                            </button>
-                        </div>
-                    </li>
-                `;
-            }).join('');
-        }
-
-        function renderResultsView() {
-            document.getElementById('display-event-title').textContent = state.eventTitle || 'Intercambio de Amigo Secreto';
-            document.getElementById('display-event-budget').innerHTML = `
-                <i class="fa-solid fa-coins text-amber-500"></i>
-                <span>Presupuesto: <strong>${escapeHTML(state.eventBudget || 'Libre')}</strong></span>
-            `;
-            document.getElementById('display-event-date').innerHTML = `
-                <i class="fa-regular fa-calendar text-rose-500"></i>
-                <span>${escapeHTML(state.eventDate || 'Fecha por confirmar')}</span>
-            `;
-
-            const sentCount = state.sentIds.length;
-            const totalCount = state.participants.length;
-            document.getElementById('sent-progress').textContent = `${sentCount} de ${totalCount} enviados / vistos`;
-
-            const listEl = document.getElementById('draw-cards-list');
-            listEl.innerHTML = state.participants.map(p => {
-                const isSent = state.sentIds.includes(p.id);
-                const initial = p.name.charAt(0).toUpperCase();
-
-                return `
-                    <div class="p-4 sm:p-5 rounded-2xl bg-white border ${isSent ? 'border-emerald-200 bg-emerald-50/20' : 'border-slate-200/90'} shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                        <div class="flex items-center gap-3.5 min-w-0">
-                            <div class="w-11 h-11 rounded-2xl ${isSent ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'} font-display font-bold text-lg flex items-center justify-center shrink-0">
-                                ${isSent ? '<i class="fa-solid fa-check"></i>' : escapeHTML(initial)}
-                            </div>
-                            <div class="min-w-0">
-                                <div class="flex items-center gap-2">
-                                    <h3 class="font-display font-bold text-slate-800 text-base sm:text-lg truncate">
-                                        ${escapeHTML(p.name)}
-                                    </h3>
-                                    ${isSent ? '<span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">Enviado</span>' : ''}
-                                </div>
-                                <p class="text-xs text-slate-500">
-                                    Enlace secreto listo para entregar
-                                </p>
-                            </div>
-                        </div>
-
-                        <div class="flex flex-wrap items-center gap-2 shrink-0">
-                            <button type="button" onclick="sendPersonalWhatsApp('${p.id}')"
-                                class="flex-1 sm:flex-initial px-3.5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-[0.99] text-white font-bold text-xs sm:text-sm shadow-sm transition flex items-center justify-center gap-1.5">
-                                <i class="fa-brands fa-whatsapp text-base"></i>
-                                <span>Enviar por WhatsApp</span>
-                            </button>
-
-                            <button type="button" onclick="copyPersonalSecretLink('${p.id}')"
-                                class="px-3.5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200/80 text-slate-700 font-semibold text-xs sm:text-sm transition flex items-center justify-center gap-1.5" title="Copiar enlace secreto">
-                                <i class="fa-regular fa-copy"></i>
-                                <span>Copiar enlace</span>
-                            </button>
-
-                            <button type="button" onclick="openLocalRevealModal('${p.id}')"
-                                class="px-3 py-2.5 rounded-xl border border-slate-200 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200 text-slate-600 font-semibold text-xs sm:text-sm transition flex items-center justify-center gap-1.5" title="Ver en este mismo teléfono">
-                                <i class="fa-regular fa-eye"></i>
-                                <span class="hidden md:inline">Ver aquí</span>
-                            </button>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
-
         function escapeHTML(str) {
             if (!str) return '';
-            return str
+            return String(str)
                 .replace(/&/g, '&amp;')
                 .replace(/</g, '&lt;')
                 .replace(/>/g, '&gt;')
