@@ -1,0 +1,1498 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Amigo Secreto - Sorteo y Enlaces Compartibles</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Google Fonts: Plus Jakarta Sans & Fredoka -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                        display: ['Fredoka', 'Plus Jakarta Sans', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #fdfbf7;
+            background-image: radial-gradient(#e7e5e4 1px, transparent 1px);
+            background-size: 24px 24px;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-5px); }
+        }
+
+        .animate-float {
+            animation: float 3.5s ease-in-out infinite;
+        }
+
+        @keyframes popIn {
+            from { opacity: 0; transform: scale(0.95) translateY(8px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        .animate-pop {
+            animation: popIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        #toast-container {
+            position: fixed;
+            bottom: 1.25rem;
+            right: 1.25rem;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            max-width: calc(100vw - 2.5rem);
+        }
+    </style>
+</head>
+<body class="text-slate-800 antialiased min-h-screen flex flex-col selection:bg-rose-200 selection:text-rose-900">
+
+    <!-- Toast Notifications -->
+    <div id="toast-container"></div>
+
+    <!-- Header -->
+    <header class="bg-gradient-to-r from-rose-700 via-red-600 to-rose-700 text-white shadow-lg relative overflow-hidden">
+        <div class="absolute inset-0 opacity-10 pointer-events-none overflow-hidden">
+            <i class="fa-solid fa-gift text-8xl absolute -top-4 left-8 rotate-12"></i>
+            <i class="fa-solid fa-snowflake text-7xl absolute top-6 right-24 -rotate-12"></i>
+            <i class="fa-solid fa-star text-6xl absolute -bottom-4 left-1/3 rotate-45"></i>
+            <i class="fa-solid fa-sleigh text-8xl absolute -bottom-4 right-8 -rotate-6"></i>
+        </div>
+
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-8 relative z-10 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-4 text-center sm:text-left">
+                <div class="w-14 h-14 sm:w-16 sm:h-16 bg-white/15 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/25 shadow-inner animate-float shrink-0 mx-auto sm:mx-0">
+                    <i class="fa-solid fa-gifts text-3xl text-amber-300"></i>
+                </div>
+                <div>
+                    <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/15 text-amber-200 text-xs font-semibold tracking-wide uppercase mb-1">
+                        <i class="fa-solid fa-link text-[10px]"></i> Sin Servidor &bull; Enlaces Mágicos
+                    </div>
+                    <h1 class="font-display text-2xl sm:text-4xl font-bold tracking-tight">
+                        Amigo Secreto
+                    </h1>
+                    <p class="text-rose-100 text-xs sm:text-sm mt-0.5">
+                        Anoten sus deseos de regalo, compartan el enlace por WhatsApp y sorteen en segundos.
+                    </p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2 shrink-0">
+                <button type="button" onclick="openHelpModal()" class="px-3.5 py-2 rounded-xl bg-white/15 hover:bg-white/25 active:scale-95 transition text-white text-xs sm:text-sm font-semibold flex items-center gap-2 border border-white/20 backdrop-blur-sm">
+                    <i class="fa-solid fa-cloud-arrow-up"></i>
+                    <span>¿Cómo publicar?</span>
+                </button>
+                <button type="button" onclick="openConfirmResetModal()" class="px-3.5 py-2 rounded-xl bg-rose-950/40 hover:bg-rose-950/60 active:scale-95 transition text-white text-xs sm:text-sm font-semibold flex items-center gap-2 border border-white/15">
+                    <i class="fa-solid fa-rotate-right"></i>
+                    <span>Nuevo</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Local File Warning Banner (Shown only if opened via file://) -->
+    <div id="local-file-banner" class="hidden bg-amber-50 border-b border-amber-200 text-amber-900 px-4 py-3 text-xs sm:text-sm">
+        <div class="max-w-5xl mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+            <div class="flex items-start gap-2.5">
+                <i class="fa-solid fa-triangle-exclamation text-amber-600 mt-0.5 shrink-0"></i>
+                <p>
+                    Estás abriendo este archivo desde tu computadora (<code class="bg-amber-100 px-1.5 py-0.5 rounded font-mono text-xs">file://</code>). Para que los enlaces compartidos funcionen en los teléfonos de tus amigos, súbelo gratis a <strong>Netlify Drop</strong> o <strong>GitHub Pages</strong>.
+                </p>
+            </div>
+            <button type="button" onclick="openHelpModal()" class="text-amber-800 underline font-bold shrink-0 hover:text-amber-950">
+                Ver pasos (1 min) &rarr;
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <main class="flex-grow max-w-5xl w-full mx-auto px-4 sm:px-6 py-7">
+
+        <!-- ================================================================= -->
+        <!-- VIEW 1: GROUP SETUP & SHARED REGISTRATION (#g=...)                -->
+        <!-- ================================================================= -->
+        <div id="setup-view" class="space-y-6">
+
+            <!-- Prominent Share Group Link Card -->
+            <section class="bg-gradient-to-br from-emerald-600 to-teal-700 rounded-2xl shadow-md text-white p-5 sm:p-6 relative overflow-hidden">
+                <i class="fa-brands fa-whatsapp text-8xl absolute -right-4 -bottom-4 opacity-10 pointer-events-none"></i>
+                <div class="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                    <div class="max-w-xl">
+                        <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/15 text-emerald-100 text-xs font-bold uppercase tracking-wider mb-1.5">
+                            <i class="fa-solid fa-share-nodes"></i> Paso 1: Invita al grupo
+                        </div>
+                        <h2 class="font-display text-xl sm:text-2xl font-bold">
+                            Comparte este enlace para que cada uno se anote
+                        </h2>
+                        <p class="text-emerald-50 text-xs sm:text-sm mt-1 leading-relaxed">
+                            Toda la lista y los regalos viajan codificados dentro de la dirección web. Cuando alguien agregue su nombre y deseo, recibirá un enlace actualizado para reenviar al grupo.
+                        </p>
+                    </div>
+
+                    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 shrink-0">
+                        <button type="button" onclick="copyGroupLink()"
+                            class="px-4 py-3 rounded-xl bg-white text-emerald-800 hover:bg-emerald-50 active:scale-[0.99] font-bold text-sm shadow-sm transition flex items-center justify-center gap-2">
+                            <i class="fa-regular fa-copy"></i>
+                            <span>Copiar Enlace del Grupo</span>
+                        </button>
+                        <button type="button" onclick="shareGroupOnWhatsApp()"
+                            class="px-4 py-3 rounded-xl bg-emerald-950/40 hover:bg-emerald-950/60 border border-white/25 text-white active:scale-[0.99] font-bold text-sm transition flex items-center justify-center gap-2">
+                            <i class="fa-brands fa-whatsapp text-lg text-emerald-300"></i>
+                            <span>Enviar por WhatsApp</span>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Event Configuration Card -->
+            <section class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-5 sm:p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="font-display text-lg sm:text-xl font-bold text-slate-800 flex items-center gap-2.5">
+                        <span class="w-8 h-8 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center text-sm">
+                            <i class="fa-solid fa-sliders"></i>
+                        </span>
+                        Detalles del Intercambio
+                    </h2>
+                    <span class="text-xs font-medium text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg flex items-center gap-1">
+                        <i class="fa-solid fa-link text-[10px]"></i> Sincronizado en URL
+                    </span>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                        <label for="event-title" class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+                            Nombre del Grupo
+                        </label>
+                        <div class="relative">
+                            <i class="fa-solid fa-champagne-glasses absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                            <input type="text" id="event-title" placeholder="Ej. Navidad Familia 2026" 
+                                class="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-rose-500 focus:ring-2 focus:ring-rose-200 outline-none text-sm transition"
+                                oninput="saveEventSettings()">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="event-budget" class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+                            Presupuesto Sugerido
+                        </label>
+                        <div class="relative">
+                            <i class="fa-solid fa-coins absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                            <input type="text" id="event-budget" placeholder="Ej. $15.000 CLP" 
+                                class="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-rose-500 focus:ring-2 focus:ring-rose-200 outline-none text-sm transition"
+                                oninput="saveEventSettings()">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="event-date" class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+                            Fecha / Lugar del Intercambio
+                        </label>
+                        <div class="relative">
+                            <i class="fa-regular fa-calendar-check absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                            <input type="text" id="event-date" placeholder="Ej. 24 de Dic - Cena 21:00" 
+                                class="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-rose-500 focus:ring-2 focus:ring-rose-200 outline-none text-sm transition"
+                                oninput="saveEventSettings()">
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Grid: Join / Add Participant + Participants List -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                
+                <!-- Left Column: Join / Add Form (5 cols) -->
+                <section class="lg:col-span-5 bg-white rounded-2xl shadow-sm border border-slate-200/80 p-5 sm:p-6 lg:sticky lg:top-6">
+                    <h2 id="form-heading" class="font-display text-lg sm:text-xl font-bold text-slate-800 flex items-center gap-2.5 mb-4">
+                        <span class="w-8 h-8 rounded-lg bg-rose-100 text-rose-600 flex items-center justify-center text-sm">
+                            <i class="fa-solid fa-user-plus"></i>
+                        </span>
+                        Anotarme / Agregar Participante
+                    </h2>
+
+                    <form id="participant-form" onsubmit="handleParticipantSubmit(event)" class="space-y-4">
+                        <input type="hidden" id="edit-id" value="">
+
+                        <div>
+                            <label for="participant-name" class="block text-sm font-semibold text-slate-700 mb-1">
+                                Tu Nombre (o del participante) <span class="text-rose-500">*</span>
+                            </label>
+                            <input type="text" id="participant-name" required maxlength="35"
+                                placeholder="Ej. Camila González"
+                                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-rose-500 focus:ring-2 focus:ring-rose-200 outline-none text-sm transition">
+                        </div>
+
+                        <div>
+                            <label for="participant-gift" class="block text-sm font-semibold text-slate-700 mb-1 flex items-center justify-between">
+                                <span>Tu Opción o Idea de Regalo</span>
+                                <span class="text-xs font-normal text-slate-400">Opcional</span>
+                            </label>
+                            <textarea id="participant-gift" rows="3" maxlength="160"
+                                placeholder="Ej. Libros de misterio, calcetines divertidos, chocolates amargos o taza térmica..."
+                                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-rose-500 focus:ring-2 focus:ring-rose-200 outline-none text-sm transition resize-none"></textarea>
+                            <p class="text-xs text-slate-400 mt-1 flex items-center gap-1">
+                                <i class="fa-solid fa-lightbulb text-amber-400"></i>
+                                Quien te saque en el sorteo verá estas pistas.
+                            </p>
+                        </div>
+
+                        <div class="pt-1 flex gap-2">
+                            <button type="submit" id="btn-submit-participant"
+                                class="flex-1 bg-rose-600 hover:bg-rose-700 active:scale-[0.99] text-white font-bold py-3 px-4 rounded-xl shadow-sm shadow-rose-200 transition flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-plus"></i>
+                                <span>Guardar en la lista</span>
+                            </button>
+
+                            <button type="button" id="btn-cancel-edit" onclick="cancelEdit()" class="hidden px-4 py-3 rounded-xl border border-slate-200 hover:bg-slate-100 text-slate-600 font-semibold text-sm transition">
+                                Cancelar
+                            </button>
+                        </div>
+                    </form>
+
+                    <!-- Post-Add Share Prompt Banner (Appears immediately after someone adds themselves) -->
+                    <div id="post-add-share-box" class="hidden mt-4 p-4 rounded-xl bg-emerald-50 border border-emerald-200 animate-pop">
+                        <div class="flex items-start gap-2.5">
+                            <i class="fa-solid fa-circle-check text-emerald-600 text-lg mt-0.5"></i>
+                            <div class="flex-1">
+                                <h4 class="font-bold text-emerald-900 text-sm">¡Listo! Ya estás anotado en el enlace</h4>
+                                <p class="text-xs text-emerald-800 mt-0.5 leading-relaxed">
+                                    Envía el enlace actualizado al grupo de WhatsApp para que el organizador y los demás vean tu opción de regalo:
+                                </p>
+                                <div class="mt-2.5 flex flex-wrap gap-2">
+                                    <button type="button" onclick="shareGroupOnWhatsApp(true)"
+                                        class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm transition">
+                                        <i class="fa-brands fa-whatsapp text-sm"></i>
+                                        <span>Reenviar al grupo</span>
+                                    </button>
+                                    <button type="button" onclick="copyGroupLink()"
+                                        class="px-3 py-1.5 rounded-lg bg-white hover:bg-emerald-100 text-emerald-800 border border-emerald-200 font-semibold text-xs flex items-center gap-1.5 transition">
+                                        <i class="fa-regular fa-copy"></i>
+                                        <span>Copiar enlace</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Demo Button -->
+                    <div class="mt-5 pt-4 border-t border-slate-100 flex items-center justify-between gap-2">
+                        <span class="text-xs text-slate-400">¿Quieres probar rápido?</span>
+                        <button type="button" onclick="loadSampleData()"
+                            class="text-xs font-semibold text-slate-600 hover:text-emerald-700 bg-slate-100 hover:bg-emerald-50 px-3 py-1.5 rounded-lg transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-wand-magic-sparkles text-amber-500"></i>
+                            Cargar ejemplo
+                        </button>
+                    </div>
+                </section>
+
+                <!-- Right Column: Participants List & Draw Trigger (7 cols) -->
+                <section class="lg:col-span-7 bg-white rounded-2xl shadow-sm border border-slate-200/80 p-5 sm:p-6 flex flex-col">
+                    <div class="flex flex-wrap items-center justify-between gap-2 mb-4 pb-3 border-b border-slate-100">
+                        <div class="flex items-center gap-2.5">
+                            <span class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center text-sm">
+                                <i class="fa-solid fa-users"></i>
+                            </span>
+                            <h2 class="font-display text-lg sm:text-xl font-bold text-slate-800">
+                                Participantes Anotados
+                            </h2>
+                            <span id="participant-count-badge" class="ml-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-700">
+                                0
+                            </span>
+                        </div>
+
+                        <button type="button" onclick="toggleWishesVisibility()"
+                            class="text-xs font-medium text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200/70 px-3 py-1.5 rounded-lg transition flex items-center gap-1.5">
+                            <i id="icon-toggle-wishes" class="fa-regular fa-eye-slash"></i>
+                            <span id="text-toggle-wishes">Ocultar deseos</span>
+                        </button>
+                    </div>
+
+                    <!-- Empty State -->
+                    <div id="empty-participants" class="py-12 px-4 text-center">
+                        <div class="w-16 h-16 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-3 text-2xl">
+                            <i class="fa-solid fa-sleigh"></i>
+                        </div>
+                        <h3 class="font-semibold text-slate-700 text-base">Aún no hay participantes</h3>
+                        <p class="text-slate-500 text-sm max-w-sm mx-auto mt-1">
+                            Agrega al menos <strong>3 personas</strong> (o comparte el enlace arriba para que cada uno se anote) antes de realizar el sorteo.
+                        </p>
+                    </div>
+
+                    <!-- List -->
+                    <ul id="participants-list" class="space-y-3 mb-6 max-h-[440px] overflow-y-auto pr-1">
+                        <!-- Rendered dynamically -->
+                    </ul>
+
+                    <!-- Draw Footer -->
+                    <div class="mt-auto pt-4 border-t border-slate-100">
+                        <div id="min-warning" class="mb-3 px-3.5 py-2.5 rounded-xl bg-amber-50 border border-amber-200/70 text-amber-800 text-xs sm:text-sm flex items-center gap-2.5">
+                            <i class="fa-solid fa-circle-info text-amber-500 shrink-0"></i>
+                            <span>Se necesitan al menos <strong>3 participantes</strong> para realizar el sorteo.</span>
+                        </div>
+
+                        <button type="button" id="btn-start-draw" onclick="performDraw()" disabled
+                            class="w-full py-3.5 px-6 rounded-xl font-display font-bold text-base sm:text-lg text-white bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-700 hover:to-red-700 disabled:from-slate-300 disabled:to-slate-300 disabled:cursor-not-allowed shadow-md shadow-rose-200/60 disabled:shadow-none transition active:scale-[0.99] flex items-center justify-center gap-2.5">
+                            <i class="fa-solid fa-shuffle"></i>
+                            <span>¡Realizar Sorteo y Generar Enlaces Secretos!</span>
+                        </button>
+                    </div>
+                </section>
+            </div>
+        </div>
+
+        <!-- ================================================================= -->
+        <!-- VIEW 2: ORGANIZER DRAW RESULTS & PRIVATE LINKS                    -->
+        <!-- ================================================================= -->
+        <div id="results-view" class="hidden space-y-6">
+            
+            <!-- Summary Banner -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-5 sm:p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                <div>
+                    <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold mb-1.5">
+                        <i class="fa-solid fa-check-circle"></i> ¡Sorteo Listo! Enlaces Privados Generados
+                    </div>
+                    <h2 id="display-event-title" class="font-display text-xl sm:text-2xl font-bold text-slate-800">
+                        Intercambio de Amigo Secreto
+                    </h2>
+                    <div class="flex flex-wrap items-center gap-x-5 gap-y-1.5 mt-2 text-sm text-slate-600">
+                        <span id="display-event-budget" class="flex items-center gap-1.5">
+                            <i class="fa-solid fa-coins text-amber-500"></i>
+                            <span>Presupuesto: Libre</span>
+                        </span>
+                        <span id="display-event-date" class="flex items-center gap-1.5">
+                            <i class="fa-regular fa-calendar text-rose-500"></i>
+                            <span>Fecha: Por confirmar</span>
+                        </span>
+                    </div>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-2.5 w-full md:w-auto">
+                    <button type="button" onclick="backToEdit()"
+                        class="flex-1 md:flex-initial px-4 py-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold text-sm transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-arrow-left"></i>
+                        <span>Volver a la Lista</span>
+                    </button>
+                    <button type="button" onclick="performDraw(true)"
+                        class="flex-1 md:flex-initial px-4 py-2.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200/80 font-semibold text-sm transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-dice"></i>
+                        <span>Re-sortear</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- How Private Links Work Box -->
+            <div class="bg-gradient-to-r from-amber-50 to-rose-50 border border-amber-200/80 rounded-2xl p-4 sm:p-5 flex items-start gap-3.5">
+                <div class="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0 mt-0.5 shadow-sm">
+                    <i class="fa-solid fa-user-secret text-lg"></i>
+                </div>
+                <div>
+                    <h3 class="font-bold text-slate-800 text-sm sm:text-base">Envía a cada persona su enlace privado</h3>
+                    <p class="text-slate-600 text-xs sm:text-sm mt-0.5 leading-relaxed">
+                        Cada botón de <strong>WhatsApp</strong> o <strong>Copiar Enlace</strong> genera una URL única que contiene <strong>únicamente</strong> el resultado de esa persona (ni tú ni ellos verán los resultados de los demás). Si están reunidos en persona, también pueden usar <em>"Ver aquí"</em>.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Progress Header -->
+            <div class="flex items-center justify-between text-xs sm:text-sm text-slate-500 px-1">
+                <span>Lista de participantes y sus enlaces secretos:</span>
+                <span id="sent-progress" class="font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg">
+                    0 de 0 enviados/vistos
+                </span>
+            </div>
+
+            <!-- Participants Private Links List -->
+            <div id="draw-cards-list" class="space-y-3">
+                <!-- Rendered dynamically -->
+            </div>
+        </div>
+
+        <!-- ================================================================= -->
+        <!-- VIEW 3: INDIVIDUAL SECRET REVEAL VIEW (#r=...)                    -->
+        <!-- ================================================================= -->
+        <div id="single-reveal-view" class="hidden max-w-lg mx-auto py-4">
+            <div class="bg-white rounded-3xl shadow-xl border border-slate-200/80 overflow-hidden animate-pop">
+                
+                <!-- Top Festive Header -->
+                <div class="bg-gradient-to-br from-rose-600 via-red-600 to-rose-700 p-7 text-center text-white relative overflow-hidden">
+                    <i class="fa-solid fa-gift text-8xl absolute -left-4 -bottom-4 opacity-10 -rotate-12"></i>
+                    <i class="fa-solid fa-snowflake text-7xl absolute -right-3 -top-3 opacity-10"></i>
+
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/15 text-amber-200 text-xs font-bold uppercase tracking-wider mb-3">
+                        <i class="fa-solid fa-lock"></i> Mensaje Confidencial
+                    </span>
+                    <h2 class="font-display text-2xl sm:text-3xl font-bold">
+                        ¡Hola, <span id="solo-giver-name" class="text-amber-300">Participante</span>!
+                    </h2>
+                    <p id="solo-event-title" class="text-rose-100 text-sm mt-1">
+                        Intercambio de Amigo Secreto
+                    </p>
+                </div>
+
+                <!-- Step A: Unopened Envelope -->
+                <div id="solo-locked-box" class="p-7 text-center">
+                    <div class="w-20 h-20 rounded-3xl bg-amber-100 text-amber-600 flex items-center justify-center mx-auto mb-4 text-4xl shadow-inner animate-float">
+                        <i class="fa-solid fa-envelope-open-text"></i>
+                    </div>
+                    <h3 class="font-display text-xl font-bold text-slate-800">
+                        Tu Amigo Secreto ya fue sorteado
+                    </h3>
+                    <p class="text-slate-600 text-sm mt-2 leading-relaxed">
+                        Asegúrate de que nadie esté mirando tu pantalla antes de abrir el sobre.
+                    </p>
+                    <button type="button" onclick="revealSoloSecret()"
+                        class="mt-6 w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-display font-bold text-lg shadow-lg shadow-emerald-200 transition active:scale-[0.99] flex items-center justify-center gap-2.5">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                        <span>Descubrir a quién le regalo</span>
+                    </button>
+                </div>
+
+                <!-- Step B: Revealed Secret -->
+                <div id="solo-unlocked-box" class="hidden p-6 sm:p-7 space-y-5">
+                    <div class="text-center bg-gradient-to-b from-emerald-50 to-teal-50/60 border border-emerald-200/80 rounded-2xl p-5">
+                        <span class="text-xs font-bold uppercase tracking-wider text-emerald-700">
+                            Te toca hacerle un regalo a:
+                        </span>
+                        <h3 id="solo-receiver-name" class="font-display text-3xl sm:text-4xl font-bold text-slate-900 mt-1.5">
+                            Nombre Amigo
+                        </h3>
+                    </div>
+
+                    <!-- Gift Wishlist Box -->
+                    <div class="bg-amber-50 border border-amber-200/80 rounded-2xl p-4 sm:p-5">
+                        <div class="flex items-center gap-2 text-amber-800 font-bold text-xs uppercase tracking-wider mb-1.5">
+                            <i class="fa-solid fa-gift text-amber-500"></i>
+                            <span>Opción / Idea de Regalo que pidió:</span>
+                        </div>
+                        <p id="solo-receiver-gift" class="text-slate-800 text-sm sm:text-base font-medium leading-relaxed">
+                            "Idea de regalo"
+                        </p>
+                    </div>
+
+                    <!-- Event Details -->
+                    <div id="solo-event-details" class="bg-slate-50 rounded-xl p-4 border border-slate-200/70 text-xs sm:text-sm text-slate-600 space-y-1.5">
+                        <!-- Rendered dynamically -->
+                    </div>
+
+                    <div class="pt-2 flex flex-col gap-2.5">
+                        <button type="button" onclick="hideSoloSecret()"
+                            class="w-full py-3 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm transition flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-eye-slash"></i>
+                            <span>Ocultar resultado de la pantalla</span>
+                        </button>
+                        <button type="button" onclick="exitSoloViewToNewGroup()"
+                            class="w-full py-2.5 px-4 rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-100 font-semibold text-xs transition">
+                            Crear mi propio sorteo de Amigo Secreto
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="mt-auto py-6 text-center text-xs text-slate-400 border-t border-slate-200/60 bg-white/50">
+        <p>Hecho con <i class="fa-solid fa-heart text-rose-500"></i> &bull; Funciona 100% sin servidores codificando los datos en el enlace.</p>
+    </footer>
+
+    <!-- ===================================================================== -->
+    <!-- MODAL 1: IN-PERSON LOCAL REVEAL MODAL                                 -->
+    <!-- ===================================================================== -->
+    <div id="reveal-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm">
+        <div class="bg-white rounded-3xl max-w-md w-full shadow-2xl overflow-hidden animate-pop border border-slate-100">
+            
+            <!-- Step 1: Confirm Identity -->
+            <div id="reveal-step-confirm" class="p-6 sm:p-8 text-center">
+                <div class="w-16 h-16 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center mx-auto mb-4 text-3xl">
+                    <i class="fa-solid fa-shield-halved"></i>
+                </div>
+                <span class="text-xs font-bold uppercase tracking-wider text-rose-600 bg-rose-50 px-3 py-1 rounded-full">
+                    Zona Privada
+                </span>
+                <h3 class="font-display text-2xl font-bold text-slate-800 mt-3">
+                    ¿Eres <span id="confirm-giver-name" class="text-rose-600">Nombre</span>?
+                </h3>
+                <p class="text-slate-600 text-sm mt-2 leading-relaxed">
+                    Asegúrate de que nadie más esté mirando la pantalla antes de descubrir tu resultado.
+                </p>
+
+                <div class="mt-7 flex flex-col sm:flex-row gap-3">
+                    <button type="button" onclick="closeRevealModal()"
+                        class="flex-1 py-3 px-4 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-600 font-semibold text-sm transition">
+                        Cancelar
+                    </button>
+                    <button type="button" onclick="confirmAndShowSecret()"
+                        class="flex-1 py-3 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-sm shadow-md shadow-rose-200 transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-eye"></i>
+                        <span>Sí, ver mi secreto</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 2: Show Secret -->
+            <div id="reveal-step-secret" class="hidden">
+                <div class="bg-gradient-to-br from-emerald-600 to-teal-700 p-6 text-center text-white relative overflow-hidden">
+                    <i class="fa-solid fa-gift text-7xl absolute -right-4 -bottom-4 opacity-15 rotate-12"></i>
+                    <p class="text-emerald-100 text-xs font-semibold uppercase tracking-wider">
+                        Hola <span id="secret-giver-name" class="underline">Nombre</span>, tu Amigo Secreto es:
+                    </p>
+                    <h3 id="secret-receiver-name" class="font-display text-3xl sm:text-4xl font-bold mt-2 tracking-tight">
+                        Nombre Receptor
+                    </h3>
+                </div>
+
+                <div class="p-6 space-y-4">
+                    <div class="bg-amber-50 border border-amber-200/80 rounded-2xl p-4">
+                        <div class="flex items-center gap-2 text-amber-800 font-bold text-xs uppercase tracking-wider mb-1.5">
+                            <i class="fa-solid fa-wand-sparkles text-amber-500"></i>
+                            <span>Opción / Deseo de Regalo:</span>
+                        </div>
+                        <p id="secret-receiver-gift" class="text-slate-800 text-sm sm:text-base font-medium leading-relaxed">
+                            "Regalo"
+                        </p>
+                    </div>
+
+                    <button type="button" onclick="markDoneAndCloseModal()"
+                        class="w-full py-3.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm shadow-md transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-eye-slash"></i>
+                        <span>¡Entendido! Ocultar y continuar</span>
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- MODAL 2: HOSTING & SHARING GUIDE MODAL                                -->
+    <!-- ===================================================================== -->
+    <div id="help-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-7 shadow-2xl animate-pop max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                <h3 class="font-display text-xl font-bold text-slate-800 flex items-center gap-2">
+                    <i class="fa-solid fa-rocket text-rose-600"></i>
+                    Cómo publicar y compartir gratis
+                </h3>
+                <button type="button" onclick="closeHelpModal()" class="w-8 h-8 rounded-lg text-slate-400 hover:bg-slate-100 flex items-center justify-center">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="mt-4 space-y-4 text-sm text-slate-600 leading-relaxed">
+                <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/70">
+                    <h4 class="font-bold text-slate-800 mb-1 flex items-center gap-2">
+                        <span class="w-5 h-5 rounded-full bg-rose-600 text-white text-xs flex items-center justify-center">1</span>
+                        Sube este archivo a Internet (Gratis, 30 seg)
+                    </h4>
+                    <p class="text-xs sm:text-sm">
+                        Descarga este archivo HTML, cámbiale el nombre a <code class="bg-white px-1.5 py-0.5 rounded border text-rose-700 font-mono text-xs">index.html</code> y arrástralo dentro de <strong>app.netlify.com/drop</strong> (o súbelo a GitHub Pages / Vercel). Obtendrás un enlace web real.
+                    </p>
+                </div>
+
+                <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/70">
+                    <h4 class="font-bold text-slate-800 mb-1 flex items-center gap-2">
+                        <span class="w-5 h-5 rounded-full bg-emerald-600 text-white text-xs flex items-center justify-center">2</span>
+                        Comparte el enlace del grupo (<code class="text-xs font-mono">#g=...</code>)
+                    </h4>
+                    <p class="text-xs sm:text-sm">
+                        Envía el enlace por WhatsApp. Cuando cada participante abra el link en su teléfono y escriba su nombre y opción de regalo, la app actualizará el enlace para que lo reenvíe al grupo.
+                    </p>
+                </div>
+
+                <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/70">
+                    <h4 class="font-bold text-slate-800 mb-1 flex items-center gap-2">
+                        <span class="w-5 h-5 rounded-full bg-amber-500 text-white text-xs flex items-center justify-center">3</span>
+                        Sortea y envía los enlaces secretos (<code class="text-xs font-mono">#r=...</code>)
+                    </h4>
+                    <p class="text-xs sm:text-sm">
+                        Cuando todos estén anotados, presiona <strong>Realizar Sorteo</strong> y envíale a cada uno su enlace privado por WhatsApp. Cada enlace contiene únicamente el nombre y deseo de su amigo secreto.
+                    </p>
+                </div>
+            </div>
+
+            <button type="button" onclick="closeHelpModal()"
+                class="mt-6 w-full py-3 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm transition">
+                ¡Entendido!
+            </button>
+        </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- MODAL 3: CONFIRM RESET MODAL                                          -->
+    <!-- ===================================================================== -->
+    <div id="reset-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl animate-pop text-center">
+            <div class="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mx-auto mb-3 text-xl">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <h3 class="font-display text-lg font-bold text-slate-800">¿Iniciar un grupo nuevo?</h3>
+            <p class="text-slate-500 text-sm mt-1.5">
+                Se limpiará la lista actual y el enlace volverá a estar en blanco para crear otro sorteo.
+            </p>
+            <div class="mt-6 flex gap-3">
+                <button type="button" onclick="closeConfirmResetModal()"
+                    class="flex-1 py-2.5 px-4 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold text-sm transition">
+                    Cancelar
+                </button>
+                <button type="button" onclick="executeFullReset()"
+                    class="flex-1 py-2.5 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-semibold text-sm transition">
+                    Sí, limpiar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- JAVASCRIPT: URL HASH ENCODING, STATE & DRAW LOGIC                     -->
+    <!-- ===================================================================== -->
+    <script>
+        const STORAGE_KEY = 'amigo_secreto_url_v2';
+
+        // Main Group State
+        let state = {
+            eventTitle: '',
+            eventBudget: '',
+            eventDate: '',
+            participants: [], // [{ id, name, gift }]
+            assignments: {},  // { giverId: receiverId }
+            sentIds: [],      // [giverId]
+            isDrawn: false,
+            hideWishesInSetup: false
+        };
+
+        // Solo Reveal Payload (when opened via #r=...)
+        let soloRevealData = null; // { g: giverName, r: receiverName, w: receiverGift, t: eventTitle, b: budget, d: date }
+
+        // Active modal giver ID
+        let activeModalGiverId = null;
+
+        // ---------------------------------------------------------------------
+        // UNICODE-SAFE BASE64 URL ENCODING / DECODING
+        // ---------------------------------------------------------------------
+        function encodePayload(obj) {
+            try {
+                const jsonStr = JSON.stringify(obj);
+                const utf8Bytes = new TextEncoder().encode(jsonStr);
+                let binary = '';
+                for (let i = 0; i < utf8Bytes.length; i++) {
+                    binary += String.fromCharCode(utf8Bytes[i]);
+                }
+                // URL-safe Base64 (+ -> -, / -> _, strip =)
+                return btoa(binary)
+                    .replace(/\+/g, '-')
+                    .replace(/\//g, '_')
+                    .replace(/=+$/, '');
+            } catch (e) {
+                console.error('Error encoding URL payload:', e);
+                return '';
+            }
+        }
+
+        function decodePayload(encodedStr) {
+            try {
+                // Restore standard Base64
+                let base64 = encodedStr.replace(/-/g, '+').replace(/_/g, '/');
+                while (base64.length % 4) {
+                    base64 += '=';
+                }
+                const binary = atob(base64);
+                const bytes = new Uint8Array(binary.length);
+                for (let i = 0; i < binary.length; i++) {
+                    bytes[i] = binary.charCodeAt(i);
+                }
+                const jsonStr = new TextDecoder().decode(bytes);
+                return JSON.parse(jsonStr);
+            } catch (e) {
+                console.error('Error decoding URL payload:', e);
+                return null;
+            }
+        }
+
+        // Compact serializer for Group URL (#g=...) to keep URLs as short as possible
+        function buildGroupShareURL() {
+            const compact = {
+                t: state.eventTitle || '',
+                b: state.eventBudget || '',
+                d: state.eventDate || '',
+                p: state.participants.map(item => [item.name, item.gift || ''])
+            };
+            const hash = '#g=' + encodePayload(compact);
+            const baseUrl = window.location.href.split('#')[0];
+            return baseUrl + hash;
+        }
+
+        // Compact serializer for Individual Secret Reveal URL (#r=...)
+        function buildPersonalRevealURL(giverId) {
+            const giver = state.participants.find(p => p.id === giverId);
+            const receiverId = state.assignments[giverId];
+            const receiver = state.participants.find(p => p.id === receiverId);
+            if (!giver || !receiver) return window.location.href;
+
+            const secretPayload = {
+                g: giver.name,
+                r: receiver.name,
+                w: receiver.gift || '',
+                t: state.eventTitle || '',
+                b: state.eventBudget || '',
+                d: state.eventDate || ''
+            };
+            const hash = '#r=' + encodePayload(secretPayload);
+            const baseUrl = window.location.href.split('#')[0];
+            return baseUrl + hash;
+        }
+
+        // Sync current group state into the browser URL hash & localStorage
+        function syncStateToUrlAndStorage() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+            } catch (e) {
+                console.warn('localStorage unavailable:', e);
+            }
+
+            if (soloRevealData) return; // Don't overwrite #r= when viewing a personal secret
+
+            const hasData = state.eventTitle || state.eventBudget || state.eventDate || state.participants.length > 0;
+            if (hasData) {
+                const compact = {
+                    t: state.eventTitle || '',
+                    b: state.eventBudget || '',
+                    d: state.eventDate || '',
+                    p: state.participants.map(item => [item.name, item.gift || ''])
+                };
+                const newHash = '#g=' + encodePayload(compact);
+                history.replaceState(null, '', newHash);
+            } else {
+                history.replaceState(null, '', window.location.pathname + window.location.search);
+            }
+        }
+
+        // ---------------------------------------------------------------------
+        // INITIALIZATION & URL HASH PARSING
+        // ---------------------------------------------------------------------
+        window.addEventListener('DOMContentLoaded', () => {
+            if (window.location.protocol === 'file:') {
+                document.getElementById('local-file-banner').classList.remove('hidden');
+            }
+            initFromUrlOrStorage();
+            renderApp();
+        });
+
+        window.addEventListener('hashchange', () => {
+            initFromUrlOrStorage();
+            renderApp();
+        });
+
+        function initFromUrlOrStorage() {
+            const hash = window.location.hash || '';
+
+            // Case 1: Individual Secret Reveal Link (#r=...)
+            if (hash.startsWith('#r=')) {
+                const decoded = decodePayload(hash.slice(3));
+                if (decoded && decoded.g && decoded.r) {
+                    soloRevealData = decoded;
+                    return;
+                } else {
+                    showToast('El enlace secreto parece estar incompleto o dañado.', 'error');
+                }
+            }
+
+            soloRevealData = null;
+
+            // Case 2: Shared Group Registration Link (#g=...)
+            if (hash.startsWith('#g=')) {
+                const decoded = decodePayload(hash.slice(3));
+                if (decoded && Array.isArray(decoded.p)) {
+                    state.eventTitle = decoded.t || '';
+                    state.eventBudget = decoded.b || '';
+                    state.eventDate = decoded.d || '';
+                    state.participants = decoded.p.map((pair, idx) => ({
+                        id: 'p_' + idx + '_' + Math.random().toString(36).substring(2, 6),
+                        name: Array.isArray(pair) ? (pair[0] || '') : '',
+                        gift: Array.isArray(pair) ? (pair[1] || '') : ''
+                    })).filter(p => p.name.trim() !== '');
+                    state.isDrawn = false;
+                    state.assignments = {};
+                    state.sentIds = [];
+                    return;
+                } else {
+                    showToast('El enlace del grupo está incompleto. Revisa que se haya copiado completo.', 'error');
+                }
+            }
+
+            // Case 3: Fallback to localStorage
+            try {
+                const saved = localStorage.getItem(STORAGE_KEY);
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    state = { ...state, ...parsed };
+                    syncStateToUrlAndStorage();
+                }
+            } catch (e) {
+                console.error('Error loading storage:', e);
+            }
+        }
+
+        // ---------------------------------------------------------------------
+        // TOAST NOTIFICATIONS & CLIPBOARD HELPER
+        // ---------------------------------------------------------------------
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            
+            const styles = {
+                success: 'bg-slate-900 text-white border-slate-700',
+                error: 'bg-rose-600 text-white border-rose-500',
+                info: 'bg-emerald-700 text-white border-emerald-600'
+            };
+
+            const icons = {
+                success: '<i class="fa-solid fa-circle-check text-emerald-400"></i>',
+                error: '<i class="fa-solid fa-circle-exclamation text-rose-200"></i>',
+                info: '<i class="fa-solid fa-sparkles text-amber-300"></i>'
+            };
+
+            toast.className = `flex items-center gap-2.5 px-4 py-3 rounded-xl shadow-lg border text-xs sm:text-sm font-medium transition-all duration-300 transform translate-y-2 opacity-0 ${styles[type] || styles.success}`;
+            toast.innerHTML = `${icons[type] || icons.success} <span>${escapeHTML(message)}</span>`;
+            
+            container.appendChild(toast);
+            requestAnimationFrame(() => toast.classList.remove('translate-y-2', 'opacity-0'));
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 3400);
+        }
+
+        function copyTextToClipboard(text, successMsg) {
+            const temp = document.createElement('textarea');
+            temp.value = text;
+            temp.style.position = 'fixed';
+            temp.style.opacity = '0';
+            document.body.appendChild(temp);
+            temp.select();
+            try {
+                document.execCommand('copy');
+                showToast(successMsg);
+            } catch (err) {
+                showToast('No se pudo copiar automáticamente.', 'error');
+            }
+            document.body.removeChild(temp);
+        }
+
+        // ---------------------------------------------------------------------
+        // GROUP LINK SHARING ACTIONS
+        // ---------------------------------------------------------------------
+        function copyGroupLink() {
+            const url = buildGroupShareURL();
+            copyTextToClipboard(url, '¡Enlace del grupo copiado! Pégalo en WhatsApp.');
+        }
+
+        function shareGroupOnWhatsApp(justJoined = false) {
+            const url = buildGroupShareURL();
+            const title = state.eventTitle ? `*${state.eventTitle}*` : '*Amigo Secreto*';
+            const count = state.participants.length;
+            
+            let text = '';
+            if (justJoined) {
+                text = `🎁 ¡Ya me anoté en ${title} con mi opción de regalo! (${count} anotados hasta ahora).\n\n` +
+                       `👇 Entra a este enlace actualizado para anotarte tú también o hacer el sorteo:\n${url}`;
+            } else {
+                text = `🎄 ¡Juguemos al ${title}! 🎁\n\n` +
+                       `Entra a este enlace, escribe tu nombre y pon tu opción de regalo (luego reenvía el enlace actualizado al grupo):\n${url}`;
+            }
+
+            window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank', 'noopener');
+        }
+
+        // ---------------------------------------------------------------------
+        // EVENT SETTINGS & PARTICIPANT CRUD
+        // ---------------------------------------------------------------------
+        function saveEventSettings() {
+            state.eventTitle = document.getElementById('event-title').value.trim();
+            state.eventBudget = document.getElementById('event-budget').value.trim();
+            state.eventDate = document.getElementById('event-date').value.trim();
+            syncStateToUrlAndStorage();
+        }
+
+        function handleParticipantSubmit(e) {
+            e.preventDefault();
+            const nameInput = document.getElementById('participant-name');
+            const giftInput = document.getElementById('participant-gift');
+            const editIdInput = document.getElementById('edit-id');
+
+            const name = nameInput.value.trim();
+            const gift = giftInput.value.trim();
+            const editId = editIdInput.value;
+
+            if (!name) {
+                showToast('Ingresa un nombre válido.', 'error');
+                return;
+            }
+
+            const duplicate = state.participants.find(
+                p => p.name.toLowerCase() === name.toLowerCase() && p.id !== editId
+            );
+            if (duplicate) {
+                showToast(`Ya hay alguien llamado "${name}". Agrega tu apellido o apodo.`, 'error');
+                return;
+            }
+
+            if (editId) {
+                const idx = state.participants.findIndex(p => p.id === editId);
+                if (idx !== -1) {
+                    state.participants[idx].name = name;
+                    state.participants[idx].gift = gift;
+                    showToast(`Datos de ${name} actualizados.`);
+                }
+                cancelEdit();
+            } else {
+                state.participants.push({
+                    id: 'p_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
+                    name: name,
+                    gift: gift
+                });
+                nameInput.value = '';
+                giftInput.value = '';
+                document.getElementById('post-add-share-box').classList.remove('hidden');
+                showToast(`¡${name} agregado! Enlace actualizado.`);
+            }
+
+            syncStateToUrlAndStorage();
+            renderParticipantsList();
+        }
+
+        function startEditParticipant(id) {
+            const p = state.participants.find(item => item.id === id);
+            if (!p) return;
+
+            document.getElementById('edit-id').value = p.id;
+            document.getElementById('participant-name').value = p.name;
+            document.getElementById('participant-gift').value = p.gift;
+            document.getElementById('post-add-share-box').classList.add('hidden');
+
+            document.getElementById('form-heading').innerHTML = `
+                <span class="w-8 h-8 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center text-sm">
+                    <i class="fa-solid fa-pen"></i>
+                </span>
+                Editar Participante
+            `;
+            document.getElementById('btn-submit-participant').innerHTML = `
+                <i class="fa-solid fa-check"></i>
+                <span>Guardar Cambios</span>
+            `;
+            document.getElementById('btn-cancel-edit').classList.remove('hidden');
+            document.getElementById('participant-name').focus();
+        }
+
+        function cancelEdit() {
+            document.getElementById('edit-id').value = '';
+            document.getElementById('participant-name').value = '';
+            document.getElementById('participant-gift').value = '';
+
+            document.getElementById('form-heading').innerHTML = `
+                <span class="w-8 h-8 rounded-lg bg-rose-100 text-rose-600 flex items-center justify-center text-sm">
+                    <i class="fa-solid fa-user-plus"></i>
+                </span>
+                Anotarme / Agregar Participante
+            `;
+            document.getElementById('btn-submit-participant').innerHTML = `
+                <i class="fa-solid fa-plus"></i>
+                <span>Guardar en la lista</span>
+            `;
+            document.getElementById('btn-cancel-edit').classList.add('hidden');
+        }
+
+        function deleteParticipant(id) {
+            const p = state.participants.find(item => item.id === id);
+            state.participants = state.participants.filter(item => item.id !== id);
+            if (document.getElementById('edit-id').value === id) cancelEdit();
+            syncStateToUrlAndStorage();
+            renderParticipantsList();
+            if (p) showToast(`${p.name} eliminado.`, 'info');
+        }
+
+        function toggleWishesVisibility() {
+            state.hideWishesInSetup = !state.hideWishesInSetup;
+            renderParticipantsList();
+        }
+
+        function loadSampleData() {
+            state.eventTitle = state.eventTitle || 'Amigo Secreto Oficina 2026';
+            state.eventBudget = state.eventBudget || '$15.000 CLP';
+            state.eventDate = state.eventDate || '23 de Diciembre - 19:00 hrs';
+            state.participants = [
+                { id: 'p_s1', name: 'Sofía Martínez', gift: 'Novela de misterio, velas aromáticas o té verde en hojas.' },
+                { id: 'p_s2', name: 'Diego Herrera', gift: 'Calcetines divertidos, café de grano molido o taza térmica.' },
+                { id: 'p_s3', name: 'Valentina Rojas', gift: 'Chocolates amargos 70%, libreta bonita o planta suculenta.' },
+                { id: 'p_s4', name: 'Mateo Silva', gift: 'Botella deportiva reutilizable o juego de mesa portátil.' }
+            ];
+            state.isDrawn = false;
+            state.assignments = {};
+            state.sentIds = [];
+            syncStateToUrlAndStorage();
+            renderApp();
+            showToast('Grupo de ejemplo cargado (4 participantes).', 'info');
+        }
+
+        // ---------------------------------------------------------------------
+        // SECRET SANTA DERANGEMENT DRAW
+        // ---------------------------------------------------------------------
+        function generateDerangement(ids) {
+            // Sattolo's algorithm guarantees a single cyclic permutation (nobody gets themselves)
+            const shuffled = [...ids];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * i);
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            const map = {};
+            for (let i = 0; i < ids.length; i++) {
+                map[ids[i]] = shuffled[i];
+            }
+            return map;
+        }
+
+        function performDraw(isRedraw = false) {
+            if (state.participants.length < 3) {
+                showToast('Se necesitan al menos 3 participantes.', 'error');
+                return;
+            }
+
+            const ids = state.participants.map(p => p.id);
+            state.assignments = generateDerangement(ids);
+            state.sentIds = [];
+            state.isDrawn = true;
+
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+            } catch (e) {}
+
+            renderApp();
+
+            if (typeof confetti === 'function') {
+                confetti({
+                    particleCount: 85,
+                    spread: 70,
+                    origin: { y: 0.6 },
+                    colors: ['#E11D48', '#059669', '#D97706', '#FBBF24']
+                });
+            }
+
+            showToast(isRedraw ? '¡Nuevo sorteo generado! Envía los nuevos enlaces.' : '¡Sorteo realizado! Ya puedes enviar cada enlace secreto.');
+        }
+
+        function backToEdit() {
+            state.isDrawn = false;
+            syncStateToUrlAndStorage();
+            renderApp();
+        }
+
+        // ---------------------------------------------------------------------
+        // ORGANIZER ACTIONS: SHARE PERSONAL SECRET LINKS
+        // ---------------------------------------------------------------------
+        function markAsSent(giverId) {
+            if (!state.sentIds.includes(giverId)) {
+                state.sentIds.push(giverId);
+                try {
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+                } catch (e) {}
+                renderResultsView();
+            }
+        }
+
+        function copyPersonalSecretLink(giverId) {
+            const giver = state.participants.find(p => p.id === giverId);
+            if (!giver) return;
+            const secretUrl = buildPersonalRevealURL(giverId);
+            copyTextToClipboard(secretUrl, `¡Enlace secreto de ${giver.name} copiado!`);
+            markAsSent(giverId);
+        }
+
+        function sendPersonalWhatsApp(giverId) {
+            const giver = state.participants.find(p => p.id === giverId);
+            if (!giver) return;
+            const secretUrl = buildPersonalRevealURL(giverId);
+            const title = state.eventTitle ? `*${state.eventTitle}*` : '*Amigo Secreto*';
+
+            const msg = `🤫 ¡Hola *${giver.name}*! Ya se hizo el sorteo de ${title}.\n\n` +
+                        `🎁 Abre tu enlace secreto personal para descubrir a quién te toca regalar y ver qué regalo pidió (solo tú puedes verlo):\n${secretUrl}`;
+
+            markAsSent(giverId);
+            window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank', 'noopener');
+        }
+
+        // Local In-Person Modal Reveal
+        function openLocalRevealModal(giverId) {
+            const giver = state.participants.find(p => p.id === giverId);
+            if (!giver) return;
+            activeModalGiverId = giverId;
+
+            document.getElementById('confirm-giver-name').textContent = giver.name;
+            document.getElementById('reveal-step-confirm').classList.remove('hidden');
+            document.getElementById('reveal-step-secret').classList.add('hidden');
+
+            const modal = document.getElementById('reveal-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeRevealModal() {
+            const modal = document.getElementById('reveal-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            activeModalGiverId = null;
+        }
+
+        function confirmAndShowSecret() {
+            if (!activeModalGiverId) return;
+            const giver = state.participants.find(p => p.id === activeModalGiverId);
+            const receiver = state.participants.find(p => p.id === state.assignments[activeModalGiverId]);
+            if (!giver || !receiver) return;
+
+            document.getElementById('secret-giver-name').textContent = giver.name;
+            document.getElementById('secret-receiver-name').textContent = receiver.name;
+
+            const giftEl = document.getElementById('secret-receiver-gift');
+            if (receiver.gift && receiver.gift.trim() !== '') {
+                giftEl.textContent = `"${receiver.gift}"`;
+                giftEl.classList.remove('italic', 'text-slate-500');
+            } else {
+                giftEl.textContent = 'No especificó preferencia (¡Sorpréndelo con tu creatividad!)';
+                giftEl.classList.add('italic', 'text-slate-500');
+            }
+
+            document.getElementById('reveal-step-confirm').classList.add('hidden');
+            document.getElementById('reveal-step-secret').classList.remove('hidden');
+        }
+
+        function markDoneAndCloseModal() {
+            if (activeModalGiverId) markAsSent(activeModalGiverId);
+            closeRevealModal();
+        }
+
+        // ---------------------------------------------------------------------
+        // SOLO SECRET REVEAL VIEW (#r=...)
+        // ---------------------------------------------------------------------
+        function revealSoloSecret() {
+            if (!soloRevealData) return;
+
+            document.getElementById('solo-receiver-name').textContent = soloRevealData.r;
+            const giftEl = document.getElementById('solo-receiver-gift');
+            if (soloRevealData.w && soloRevealData.w.trim() !== '') {
+                giftEl.textContent = `"${soloRevealData.w}"`;
+                giftEl.classList.remove('italic', 'text-slate-500');
+            } else {
+                giftEl.textContent = 'No especificó preferencia (¡Sorpréndelo con tu creatividad!)';
+                giftEl.classList.add('italic', 'text-slate-500');
+            }
+
+            const details = [];
+            if (soloRevealData.t) details.push(`<div><i class="fa-solid fa-champagne-glasses text-rose-500 w-5"></i> <strong>Grupo:</strong> ${escapeHTML(soloRevealData.t)}</div>`);
+            if (soloRevealData.b) details.push(`<div><i class="fa-solid fa-coins text-amber-500 w-5"></i> <strong>Presupuesto:</strong> ${escapeHTML(soloRevealData.b)}</div>`);
+            if (soloRevealData.d) details.push(`<div><i class="fa-regular fa-calendar text-emerald-600 w-5"></i> <strong>Detalles:</strong> ${escapeHTML(soloRevealData.d)}</div>`);
+
+            const detailsContainer = document.getElementById('solo-event-details');
+            if (details.length > 0) {
+                detailsContainer.innerHTML = details.join('');
+                detailsContainer.classList.remove('hidden');
+            } else {
+                detailsContainer.classList.add('hidden');
+            }
+
+            document.getElementById('solo-locked-box').classList.add('hidden');
+            document.getElementById('solo-unlocked-box').classList.remove('hidden');
+
+            if (typeof confetti === 'function') {
+                confetti({
+                    particleCount: 95,
+                    spread: 75,
+                    origin: { y: 0.55 },
+                    colors: ['#E11D48', '#059669', '#D97706', '#FBBF24']
+                });
+            }
+        }
+
+        function hideSoloSecret() {
+            document.getElementById('solo-unlocked-box').classList.add('hidden');
+            document.getElementById('solo-locked-box').classList.remove('hidden');
+        }
+
+        function exitSoloViewToNewGroup() {
+            soloRevealData = null;
+            state = {
+                eventTitle: '',
+                eventBudget: '',
+                eventDate: '',
+                participants: [],
+                assignments: {},
+                sentIds: [],
+                isDrawn: false,
+                hideWishesInSetup: false
+            };
+            history.replaceState(null, '', window.location.pathname + window.location.search);
+            renderApp();
+        }
+
+        // ---------------------------------------------------------------------
+        // MODALS (HELP & RESET)
+        // ---------------------------------------------------------------------
+        function openHelpModal() {
+            const modal = document.getElementById('help-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeHelpModal() {
+            const modal = document.getElementById('help-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function openConfirmResetModal() {
+            const modal = document.getElementById('reset-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeConfirmResetModal() {
+            const modal = document.getElementById('reset-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function executeFullReset() {
+            soloRevealData = null;
+            state = {
+                eventTitle: '',
+                eventBudget: '',
+                eventDate: '',
+                participants: [],
+                assignments: {},
+                sentIds: [],
+                isDrawn: false,
+                hideWishesInSetup: false
+            };
+            localStorage.removeItem(STORAGE_KEY);
+            cancelEdit();
+            document.getElementById('post-add-share-box').classList.add('hidden');
+            closeConfirmResetModal();
+            syncStateToUrlAndStorage();
+            renderApp();
+            showToast('Lista limpia. ¡Listo para un nuevo grupo!', 'info');
+        }
+
+        // ---------------------------------------------------------------------
+        // MAIN RENDER ROUTER
+        // ---------------------------------------------------------------------
+        function renderApp() {
+            const setupView = document.getElementById('setup-view');
+            const resultsView = document.getElementById('results-view');
+            const soloView = document.getElementById('single-reveal-view');
+
+            setupView.classList.add('hidden');
+            resultsView.classList.add('hidden');
+            soloView.classList.add('hidden');
+
+            // 1. Solo Reveal Mode (#r=...)
+            if (soloRevealData) {
+                soloView.classList.remove('hidden');
+                document.getElementById('solo-giver-name').textContent = soloRevealData.g;
+                document.getElementById('solo-event-title').textContent = soloRevealData.t || 'Intercambio de Amigo Secreto';
+                document.getElementById('solo-locked-box').classList.remove('hidden');
+                document.getElementById('solo-unlocked-box').classList.add('hidden');
+                return;
+            }
+
+            // Sync Setup Inputs
+            document.getElementById('event-title').value = state.eventTitle || '';
+            document.getElementById('event-budget').value = state.eventBudget || '';
+            document.getElementById('event-date').value = state.eventDate || '';
+
+            // 2. Organizer Results Mode
+            if (state.isDrawn && state.participants.length >= 3) {
+                resultsView.classList.remove('hidden');
+                renderResultsView();
+                return;
+            }
+
+            // 3. Group Registration Mode (#g=...)
+            state.isDrawn = false;
+            setupView.classList.remove('hidden');
+            renderParticipantsList();
+        }
+
+        function renderParticipantsList() {
+            const listEl = document.getElementById('participants-list');
+            const emptyEl = document.getElementById('empty-participants');
+            const countBadge = document.getElementById('participant-count-badge');
+            const btnDraw = document.getElementById('btn-start-draw');
+            const minWarning = document.getElementById('min-warning');
+
+            const iconToggle = document.getElementById('icon-toggle-wishes');
+            const textToggle = document.getElementById('text-toggle-wishes');
+            if (state.hideWishesInSetup) {
+                iconToggle.className = 'fa-regular fa-eye';
+                textToggle.textContent = 'Mostrar deseos';
+            } else {
+                iconToggle.className = 'fa-regular fa-eye-slash';
+                textToggle.textContent = 'Ocultar deseos';
+            }
+
+            const count = state.participants.length;
+            countBadge.textContent = count;
+
+            if (count === 0) {
+                emptyEl.classList.remove('hidden');
+                listEl.classList.add('hidden');
+            } else {
+                emptyEl.classList.add('hidden');
+                listEl.classList.remove('hidden');
+            }
+
+            if (count >= 3) {
+                btnDraw.disabled = false;
+                minWarning.classList.add('hidden');
+            } else {
+                btnDraw.disabled = true;
+                minWarning.classList.remove('hidden');
+            }
+
+            listEl.innerHTML = state.participants.map((p, idx) => {
+                const initial = p.name.charAt(0).toUpperCase();
+                const avatarColors = [
+                    'bg-rose-100 text-rose-700',
+                    'bg-emerald-100 text-emerald-700',
+                    'bg-amber-100 text-amber-700',
+                    'bg-sky-100 text-sky-700',
+                    'bg-purple-100 text-purple-700'
+                ];
+                const colorClass = avatarColors[idx % avatarColors.length];
+
+                let giftDisplay = '';
+                if (state.hideWishesInSetup) {
+                    giftDisplay = `<span class="text-xs text-slate-400 italic flex items-center gap-1 mt-0.5"><i class="fa-solid fa-lock text-[10px]"></i> Deseo oculto</span>`;
+                } else if (p.gift) {
+                    giftDisplay = `<p class="text-xs text-slate-600 mt-0.5 flex items-start gap-1.5"><i class="fa-solid fa-gift text-rose-400 mt-0.5 shrink-0"></i> <span>${escapeHTML(p.gift)}</span></p>`;
+                } else {
+                    giftDisplay = `<p class="text-xs text-slate-400 italic mt-0.5">Sin preferencia registrada</p>`;
+                }
+
+                return `
+                    <li class="p-3.5 rounded-xl border border-slate-200/80 bg-slate-50/50 hover:bg-white hover:shadow-sm transition flex items-start justify-between gap-3">
+                        <div class="flex items-start gap-3 min-w-0">
+                            <div class="w-9 h-9 rounded-xl ${colorClass} font-display font-bold text-sm flex items-center justify-center shrink-0 mt-0.5">
+                                ${escapeHTML(initial)}
+                            </div>
+                            <div class="min-w-0">
+                                <h4 class="font-bold text-slate-800 text-sm truncate">${escapeHTML(p.name)}</h4>
+                                ${giftDisplay}
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-1 shrink-0">
+                            <button type="button" onclick="startEditParticipant('${p.id}')" 
+                                class="w-8 h-8 rounded-lg text-slate-400 hover:text-amber-600 hover:bg-amber-50 transition flex items-center justify-center" title="Editar">
+                                <i class="fa-solid fa-pen text-xs"></i>
+                            </button>
+                            <button type="button" onclick="deleteParticipant('${p.id}')" 
+                                class="w-8 h-8 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition flex items-center justify-center" title="Eliminar">
+                                <i class="fa-solid fa-trash-can text-xs"></i>
+                            </button>
+                        </div>
+                    </li>
+                `;
+            }).join('');
+        }
+
+        function renderResultsView() {
+            document.getElementById('display-event-title').textContent = state.eventTitle || 'Intercambio de Amigo Secreto';
+            document.getElementById('display-event-budget').innerHTML = `
+                <i class="fa-solid fa-coins text-amber-500"></i>
+                <span>Presupuesto: <strong>${escapeHTML(state.eventBudget || 'Libre')}</strong></span>
+            `;
+            document.getElementById('display-event-date').innerHTML = `
+                <i class="fa-regular fa-calendar text-rose-500"></i>
+                <span>${escapeHTML(state.eventDate || 'Fecha por confirmar')}</span>
+            `;
+
+            const sentCount = state.sentIds.length;
+            const totalCount = state.participants.length;
+            document.getElementById('sent-progress').textContent = `${sentCount} de ${totalCount} enviados / vistos`;
+
+            const listEl = document.getElementById('draw-cards-list');
+            listEl.innerHTML = state.participants.map(p => {
+                const isSent = state.sentIds.includes(p.id);
+                const initial = p.name.charAt(0).toUpperCase();
+
+                return `
+                    <div class="p-4 sm:p-5 rounded-2xl bg-white border ${isSent ? 'border-emerald-200 bg-emerald-50/20' : 'border-slate-200/90'} shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div class="flex items-center gap-3.5 min-w-0">
+                            <div class="w-11 h-11 rounded-2xl ${isSent ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'} font-display font-bold text-lg flex items-center justify-center shrink-0">
+                                ${isSent ? '<i class="fa-solid fa-check"></i>' : escapeHTML(initial)}
+                            </div>
+                            <div class="min-w-0">
+                                <div class="flex items-center gap-2">
+                                    <h3 class="font-display font-bold text-slate-800 text-base sm:text-lg truncate">
+                                        ${escapeHTML(p.name)}
+                                    </h3>
+                                    ${isSent ? '<span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">Enviado</span>' : ''}
+                                </div>
+                                <p class="text-xs text-slate-500">
+                                    Enlace secreto listo para entregar
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-wrap items-center gap-2 shrink-0">
+                            <button type="button" onclick="sendPersonalWhatsApp('${p.id}')"
+                                class="flex-1 sm:flex-initial px-3.5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-[0.99] text-white font-bold text-xs sm:text-sm shadow-sm transition flex items-center justify-center gap-1.5">
+                                <i class="fa-brands fa-whatsapp text-base"></i>
+                                <span>Enviar por WhatsApp</span>
+                            </button>
+
+                            <button type="button" onclick="copyPersonalSecretLink('${p.id}')"
+                                class="px-3.5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200/80 text-slate-700 font-semibold text-xs sm:text-sm transition flex items-center justify-center gap-1.5" title="Copiar enlace secreto">
+                                <i class="fa-regular fa-copy"></i>
+                                <span>Copiar enlace</span>
+                            </button>
+
+                            <button type="button" onclick="openLocalRevealModal('${p.id}')"
+                                class="px-3 py-2.5 rounded-xl border border-slate-200 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200 text-slate-600 font-semibold text-xs sm:text-sm transition flex items-center justify-center gap-1.5" title="Ver en este mismo teléfono">
+                                <i class="fa-regular fa-eye"></i>
+                                <span class="hidden md:inline">Ver aquí</span>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function escapeHTML(str) {
+            if (!str) return '';
+            return str
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+    </script>
+</body>
+</html>
